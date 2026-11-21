@@ -52,6 +52,12 @@ module.exports.setWithPriority = (ref, value, priority) ->
 
   # console.log("FIREBASE::setWithPriority",ref.toString())
 
+  # Realtime Database priorities were dropped from the newer SDKs (the Admin
+  # SDK no longer exposes setWithPriority). Degrade to a plain write; callers
+  # that need ordering must put an explicit timestamp field in the payload.
+  if typeof ref.setWithPriority isnt 'function'
+    return module.exports.set(ref, value)
+
   return new Promise (resolve, reject) ->
     ref.setWithPriority value, priority, (err) ->
       if err

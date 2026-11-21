@@ -26,3 +26,24 @@ dump.rdb
 
 # OSX-specific artifacts
 .DS_Store
+
+# Local SSH keys
+.ssh/
+
+# Local secrets / keys
+.gh-token
+.github_deploy_key
+.github_deploy_key.pub
+serviceAccountKey.dev.json
+*.pem
+
+# Local tooling / scratch
+.l10n_tmp/
+.codegraph/
+.babel-cache.json
+.ec2key
+
+# Community localization source bundles (kept out of git)
+开发资源/
+
+.buildhome/

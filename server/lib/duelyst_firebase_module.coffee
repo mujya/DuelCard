@@ -11,22 +11,30 @@ config = require '../../config/config.js'
 defaultFirebaseUrl = config.get('firebase.url')
 firebaseLoggingEnabled = config.get('firebase.loggingEnabled')
 
-# Read service account credentials from the environment.
+# Build the Firebase credential.
+# Prefer an explicit service account from the environment
+# (FIREBASE_CLIENT_EMAIL + FIREBASE_PRIVATE_KEY) for backwards compatibility;
+# otherwise fall back to Google Application Default Credentials, which the
+# Admin SDK resolves from GOOGLE_APPLICATION_CREDENTIALS (e.g. a mounted
+# serviceAccountKey.json).
+firebaseCredential = null
 try
   firebaseServiceAccount = {
     project_id: config.get('firebase.projectId'),
     client_email: config.get('firebase.clientEmail'),
     private_key: config.get('firebase.privateKey'),
   }
-  if !firebaseServiceAccount.project_id
-    throw new Error('FIREBASE_PROJECT_ID must be set!')
-  if !firebaseServiceAccount.client_email
-    throw new Error('FIREBASE_CLIENT_EMAIL must be set!')
-  if !firebaseServiceAccount.private_key
-    throw new Error('FIREBASE_PRIVATE_KEY must be set!')
+  if firebaseServiceAccount.client_email and firebaseServiceAccount.private_key
+    if !firebaseServiceAccount.project_id
+      throw new Error('FIREBASE_PROJECT_ID must be set!')
+    Logger.module('Firebase').log 'Using service account credentials from the environment.'
+    firebaseCredential = firebaseAdmin.credential.cert(firebaseServiceAccount)
+  else
+    Logger.module('Firebase').log 'Using application default credentials (GOOGLE_APPLICATION_CREDENTIALS).'
+    firebaseCredential = firebaseAdmin.credential.applicationDefault()
 catch error
   Logger.module('Firebase').error "Failed to read Firebase credentials: #{error}"
-  firebaseServiceAccount = {}
+  firebaseCredential = null
 
 class DuelystFirebaseModule
   # App objects keyed by URL
@@ -45,6 +53,14 @@ class DuelystFirebaseModule
       key: key,
       firebaseUrl: firebaseUrl,
     )
+
+  # Create a Firebase Authentication custom token for the given uid.
+  # The token is signed with the service account (RS256), so a client must
+  # exchange it for an ID token via the Firebase SDK (signInWithCustomToken).
+  # Custom claims are exposed to Realtime Database rules as auth.<claim>.
+  @createCustomToken: (uid, claims = {}) ->
+    @connect().promise.then (app) ->
+      firebaseAdmin.auth(app).createCustomToken(uid, claims)
 
   # Gracefully disconnect from Firebase.
   @disconnect: (url) ->
@@ -72,9 +88,12 @@ class DuelystFirebaseModule
       if firebaseLoggingEnabled
         firebaseAdmin.database.enableLogging(true)
 
+      if !firebaseCredential
+        return reject(new Error('firebase credentials must be configured'))
+
       try
         app = firebaseAdmin.initializeApp({
-          credential: firebaseAdmin.credential.cert(firebaseServiceAccount),
+          credential: firebaseCredential,
           databaseURL: @firebaseUrl
         }, @firebaseUrl)
 

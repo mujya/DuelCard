@@ -82,7 +82,18 @@ setupDevelopment = () ->
     server.connected = true
     Logger.module("SERVER").log "Duelyst '#{env}' started on port #{apiPort}"
 
+setupLocalAssets = () ->
+  server.listen apiPort, () ->
+    server.connected = true
+    Logger.module("SERVER").log "Duelyst '#{env}' started on port #{apiPort} (local assets)"
+
 setupProduction = () ->
+  # Self-hosted single-server deployments can skip S3/CloudFront and serve the
+  # build output from /dist/src directly. Set SERVE_LOCAL_ASSETS=true.
+  if config.get('serveLocalAssets')
+    setupLocalAssets()
+    return
+
   makeDirectory (err) ->
     if err?
       Logger.module("SERVER").error "setupDirectory() failed; exiting: #{err}"

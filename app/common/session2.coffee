@@ -17,6 +17,8 @@ class Session extends EventEmitter
     @fbRef = null
     @token = null
     @expires = null
+    @firebaseRefreshToken = null
+    @_firebaseTokenRefreshTimer = null
     @userId = null
     @username = null
     @analyticsData = null
@@ -50,18 +52,85 @@ class Session extends EventEmitter
     debug("_networkError: #{e.message}")
     throw new Error('Please try again')
 
-  _authFirebase: (token) ->
+  # The server mints a short-lived Firebase custom token. The legacy Firebase
+  # SDK cannot consume custom tokens directly, but the Realtime Database
+  # accepts ID tokens - so exchange the custom token for an ID token over the
+  # Identity Toolkit REST API and hand that to authWithCustomToken.
+  _authFirebase: (firebaseToken) ->
     debug('authFirebase')
+    if not firebaseToken?
+      return Promise.reject(new Error('missing firebase token'))
+    apiKey = process.env.FIREBASE_API_KEY
+    if not apiKey
+      return Promise.reject(new Error('missing FIREBASE_API_KEY'))
+    return Promise.resolve(
+      fetch "https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key=#{apiKey}",
+        method: 'POST'
+        headers:
+          'Content-Type': 'application/json'
+        body: JSON.stringify({token: firebaseToken, returnSecureToken: true})
+    )
+    .then (res) ->
+      return res.json().then (body) ->
+        if not res.ok
+          err = new Error((body.error and body.error.message) || "Firebase sign-in failed (#{res.status})")
+          err.code = body.error and body.error.code
+          throw err
+        return body
+    .then (data) =>
+      @firebaseRefreshToken = data.refreshToken
+      @_scheduleFirebaseTokenRefresh(parseInt(data.expiresIn, 10) or 3600)
+      return @_authWithIdToken(data.idToken)
+
+  _authWithIdToken: (idToken) ->
     return new Promise (resolve, reject) =>
       @fbRef = new Firebase(@fbUrl)
-      @fbRef.authWithCustomToken token, (err, res) ->
-        debug('authWithCustomToken')
+      @fbRef.authWithCustomToken idToken, (err, auth) ->
         if err then return reject(err)
-        resolve(res)
+        resolve(auth)
+
+  # ID tokens live for about an hour; re-sign before they expire so a long
+  # session does not start failing with permission denied.
+  _scheduleFirebaseTokenRefresh: (expiresInSeconds) ->
+    @_clearFirebaseTokenRefresh()
+    delay = Math.max((expiresInSeconds - 300) * 1000, 60 * 1000)
+    @_firebaseTokenRefreshTimer = setTimeout(
+      () => @_refreshFirebaseToken()
+      delay
+    )
+    return
+
+  _clearFirebaseTokenRefresh: () ->
+    if @_firebaseTokenRefreshTimer?
+      clearTimeout(@_firebaseTokenRefreshTimer)
+      @_firebaseTokenRefreshTimer = null
+    return
+
+  _refreshFirebaseToken: () ->
+    if not @firebaseRefreshToken?
+      return Promise.resolve(null)
+    apiKey = process.env.FIREBASE_API_KEY
+    return Promise.resolve(
+      fetch "https://securetoken.googleapis.com/v1/token?key=#{apiKey}",
+        method: 'POST'
+        headers:
+          'Content-Type': 'application/x-www-form-urlencoded'
+        body: "grant_type=refresh_token&refresh_token=#{encodeURIComponent(@firebaseRefreshToken)}"
+    )
+    .then (res) ->
+      if not res.ok then throw new Error("Firebase token refresh failed (#{res.status})")
+      return res.json()
+    .then (data) =>
+      @firebaseRefreshToken = data.refresh_token
+      @_scheduleFirebaseTokenRefresh(parseInt(data.expires_in, 10) or 3600)
+      return @_authWithIdToken(data.id_token)
+    .catch (e) ->
+      debug("refreshFirebaseToken failed: #{e.message}")
+      return null
 
   _deauthFirebase: () ->
     debug('deauthFirebase')
-    if @userId
+    if @userId and @fbRef
       @fbRef
       .child("users")
       .child(@userId)
@@ -70,13 +139,11 @@ class Session extends EventEmitter
         status: "offline"
         ended: Firebase.ServerValue.TIMESTAMP
       })
-    @fbRef.unauth()
-
-  _decodeFirebaseToken: (token) ->
-    debug('_decodeFirebaseToken')
-    @userId = token.auth.id
-    @username = token.auth.username
-    @expires = token.expires
+    @_clearFirebaseTokenRefresh()
+    @firebaseRefreshToken = null
+    if @fbRef?
+      @fbRef.unauth()
+    return
 
   ###
     Show url for purchasing premium currency on external site
@@ -106,13 +173,11 @@ class Session extends EventEmitter
     .then (res) =>
       @analyticsData = res.analytics_data
       @token = res.token
-      return @_authFirebase(@token)
-    .then (res) =>
-      debug(res)
-      @userId = res.auth.id
-      @username = res.auth.username
-      @expires = res.expires
-
+      @userId = res.user_id
+      @username = res.username
+      # Exchange the server's Firebase custom token for a database session.
+      return @_authFirebase(res.firebase_token)
+    .then () =>
       data = {token: @token, userId: @userId, analyticsData:@analyticsData}
       if !silent
         @emit 'login', data
@@ -133,6 +198,8 @@ class Session extends EventEmitter
           'Authorization': "Bearer #{@token}"
       .catch () ->
 
+    @_clearFirebaseTokenRefresh()
+    @firebaseRefreshToken = null
     @fbRef = null
     @token = null
     @expires = null
@@ -201,6 +268,10 @@ class Session extends EventEmitter
     .timeout(10000)
     .catch(@_networkError)
     .then(@_checkResponse)
+    .then (data) =>
+      @username = new_username
+      if data?.firebase_token?
+        return @_authFirebase(data.firebase_token)
 
   changePassword: (currentPassword, new_password) ->
     return Promise.resolve(
@@ -256,34 +327,31 @@ class Session extends EventEmitter
   isAuthenticated: (token) ->
     if not token? then return Promise.resolve(false)
 
-    # decode with Firebase
-    return @_authFirebase(token)
-    .bind(@)
-    .timeout(15000)
-    .then (decodedToken) =>
-      debug('isAuthenticated:authFirebase', decodedToken)
-      # use decoded token to init params
-      @token = token
-      @userId = decodedToken.auth.id
-      @username = decodedToken.auth.username
-      @expires = decodedToken.expires
-      # validate token with our servers
-      return fetch "#{@url}/session",
+    # Validate the API token with our server first. The session endpoint also
+    # hands back a fresh Firebase custom token for the database session.
+    return Promise.resolve(
+      fetch "#{@url}/session",
         method: 'GET'
         headers:
           'Accept': 'application/json'
           'Content-Type': 'application/json'
-          'Authorization': "Bearer #{@token}"
+          'Authorization': "Bearer #{token}"
+    )
+    .bind(@)
+    .timeout(15000)
     .then (res) =>
       debug("isAuthenticated:fetch #{res.ok}")
       if not res.ok then return null
-      #TODO: @marwan what is the proper way to prevent _checkResponse's errors from causing this to go to the try catch
-      #I'm guessing you were trying to avoid that by only checking res.ok?
       return @_checkResponse(res)
     .then (data) =>
       if data == null then return false
 
+      @token = token
+      @userId = data.user_id
+      @username = data.username
       @analyticsData = data.analytics_data
+      return @_authFirebase(data.firebase_token)
+    .then () =>
       @emit 'login', {token: @token, userId: @userId, analyticsData: @analyticsData}
       return true
     .catch (e) ->
@@ -310,11 +378,10 @@ class Session extends EventEmitter
       # override existing token and analytics with new ones
       @token = data.token
       @analyticsData = data.analytics_data
-      return @_authFirebase(@token)
-    .then (decodedToken) =>
-      @userId = decodedToken.auth.id
-      @username = decodedToken.auth.username
-      @expires = decodedToken.expires
+      @userId = data.user_id
+      @username = data.username
+      return @_authFirebase(data.firebase_token)
+    .then () =>
       # emit login event with whatever data we currently have
       if !silent
         @emit 'login', {@token, @analyticsData, @userId}

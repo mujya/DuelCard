@@ -20,6 +20,14 @@ Running Duelyst locally requires a free Google Firebase account, software for
 running Docker containers, and a Node.js environment. For detailed instructions,
 see the [Quick Start Guide](docs/QUICKSTART.md).
 
+## Hosting for Other Players
+
+To let other people play in a browser, host the stack on a small public server.
+A ready-to-use single-server setup (Docker Compose + Caddy automatic TLS) and a
+comparison of free / low-cost options (Oracle Always Free, Hetzner, home-hosted
+options) are documented in the
+[Self-Hosting Guide](docs/SELF_HOSTING_ZH.md) (Chinese).
+
 ## Playing on Android or iOS
 
 The game can currently be played in Chrome or Safari on mobile platforms. Use

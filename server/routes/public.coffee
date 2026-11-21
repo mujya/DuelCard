@@ -26,11 +26,15 @@ poolStats = (pool) ->
   }
   return stats
 
+# Development and self-hosted single-server deployments serve the client from
+# the local build output. Staging/production normally pull index.html from S3.
+localAssets = config.isDevelopment() or config.get('serveLocalAssets')
+
 serveIndex = (req, res) ->
   # set no cache header
   res.setHeader('Cache-Control', 'no-cache')
   # serve index.html file
-  if config.isDevelopment()
+  if localAssets
     res.sendFile path.resolve(__dirname + "/../../dist/src/index.html")
   # Staging/Production mode uses index.html from S3
   else
@@ -40,7 +44,7 @@ serveRegister = (req, res) ->
   # set no cache header
   res.setHeader('Cache-Control', 'no-cache')
   # serve index.html file
-  if config.isDevelopment()
+  if localAssets
     res.sendFile path.resolve(__dirname + "/../../dist/src/register.html")
   # Staging/Production mode uses register.html from S3
   else
@@ -48,11 +52,11 @@ serveRegister = (req, res) ->
 
 # Setup routes for production / development mode
 # Development mode uses index.html from /dist folder
-if config.isDevelopment()
-  Logger.module("EXPRESS").log "Configuring for DEVELOPMENT environment #{env}".yellow
+if localAssets
+  Logger.module("EXPRESS").log "Configuring for LOCAL ASSETS environment #{env}".yellow
 
   # Serve enter /dist/src folder
-  router.use express.static(__dirname + "/../../dist/src", {etag: false, lastModified: false, maxAge: 0})
+  router.use express.static(__dirname + "/../../dist/src", {maxAge: 0})
 
   # Serve main index page /dist/src/index.html
   router.get "/", serveIndex

@@ -1,0 +1,186 @@
+# Single-server production stack for OpenDuelyst.
+#
+# Start it from this directory:
+#   docker compose up -d --build
+#
+# Caddy terminates TLS for:
+#   https://<DOMAIN>          -> api  (web client + HTTP API)
+#   wss://<DOMAIN>:8000       -> sp   (single-player socket.io)
+#   wss://<DOMAIN>:8001       -> game (multiplayer socket.io)
+#
+# Ports 80, 443, 8000 and 8001 must be open in the host firewall.
+
+name: duelyst-prod
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-node-common: &node-common
+  restart: unless-stopped
+  environment: &node-common-env
+    NODE_ENV: production
+    FIREBASE_URL: ${FIREBASE_URL}
+    TOKEN_SECRET: ${TOKEN_SECRET}
+    GOOGLE_APPLICATION_CREDENTIALS: /duelyst/serviceAccountKey.json
+    REDIS_HOST: redis
+    DEFAULT_GAME_SERVER: ${DOMAIN}
+  volumes:
+    - ../serviceAccountKey.json:/duelyst/serviceAccountKey.json:ro
+  depends_on:
+    redis:
+      condition: service_healthy
+  logging: *default-logging
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8000:8000"
+      - "8001:8001"
+    environment:
+      DOMAIN: ${DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+      game:
+        condition: service_healthy
+      sp:
+        condition: service_healthy
+    logging: *default-logging
+
+  api:
+    <<: *node-common
+    build:
+      context: ..
+      dockerfile: docker/api.Dockerfile
+    environment:
+      <<: *node-common-env
+      SERVE_LOCAL_ASSETS: "true"
+      POSTGRES_CONNECTION: pg://duelyst:${POSTGRES_PASSWORD}@db/duelyst
+    volumes:
+      - ../serviceAccountKey.json:/duelyst/serviceAccountKey.json:ro
+      - ../dist/src:/duelyst/dist/src:ro
+    expose:
+      - "3000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/healthcheck').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  game:
+    <<: *node-common
+    build:
+      context: ..
+      dockerfile: docker/game.Dockerfile
+    expose:
+      - "8001"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8001/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  sp:
+    <<: *node-common
+    build:
+      context: ..
+      dockerfile: docker/sp.Dockerfile
+    expose:
+      - "8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  worker:
+    <<: *node-common
+    build:
+      context: ..
+      dockerfile: docker/worker.Dockerfile
+    environment:
+      <<: *node-common-env
+      POSTGRES_CONNECTION: pg://duelyst:${POSTGRES_PASSWORD}@db/duelyst
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
+  migrate:
+    build:
+      context: ..
+      dockerfile: docker/migrate.Dockerfile
+    restart: "no"
+    environment:
+      NODE_ENV: production
+      POSTGRES_CONNECTION: pg://duelyst:${POSTGRES_PASSWORD}@db/duelyst
+    depends_on:
+      db:
+        condition: service_healthy
+    logging: *default-logging
+
+  db:
+    image: postgres:13
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: duelyst
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: duelyst
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U duelyst -d duelyst"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    logging: *default-logging
+
+  redis:
+    image: redis:6
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    logging: *default-logging
+
+volumes:
+  pgdata:
+  redisdata:
+  caddy_data:
+  caddy_config:

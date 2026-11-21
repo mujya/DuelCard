@@ -1,6 +1,11 @@
 .git
 .gitignore
 .vagrant
+.pgdata
+.env
+**/.env
+deploy
+serviceAccountKey.json
 Procfile
 README.md
 Vagrantfile

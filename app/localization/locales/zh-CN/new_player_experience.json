@@ -1,0 +1,17 @@
+{
+	"highlight_practice_game_popover":"点击此处进行练习赛",
+	"highlight_more_practice_games_popover":"进行更多练习赛",
+	"highlight_ladder_popover":"进行赛季天梯对战",
+	"highlight_solo_challenge_popover":"进行单人挑战",
+	"play_mode_unlock_message":"完成新手任务即可解锁。",
+	"play_mode_gauntlet_unlock_message":"任意阵营达到10级即可解锁。",
+	"play_mode_unlock_game_count_message":"再进行{{game_count}}场赛季对战即可解锁。",
+	"highlight_open_spirit_orbs_popover":"开启灵魂宝珠以解锁新卡牌加入你的收藏。",
+	"new_quests_popover":"新任务",
+	"buy_spirit_orb":"获取灵魂宝珠",
+	"new_shop_special_available_popover":"全新特惠",
+	"faction_unlocked_title":"阵营已解锁",
+	"faction_cards_unlocked_progress_label":"已解锁{{card_count}}张卡牌",
+	"bloodborn_message":"这是你的[血源法术]。它会在你的下个回合刷新。",
+	"bloodborn_message_plural":"这是你的[血源法术]。它将在{{count}}回合后刷新。"
+}

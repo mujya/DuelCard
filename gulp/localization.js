@@ -5,6 +5,7 @@ import changed from 'gulp-changed';
 import replace from 'gulp-replace';
 import _ from 'underscore';
 import fs from 'fs';
+import path from 'path';
 import { exec } from 'child_process';
 import { config } from './shared';
 
@@ -17,8 +18,13 @@ export function consolidate(locale) {
 }
 
 export function copy() {
-  // consolidate all individual language parts into index.json
-  consolidate('en');
+  // consolidate every language directory into its index.json
+  const localesDir = path.join(__dirname, '../app/localization/locales');
+  fs.readdirSync(localesDir).forEach((locale) => {
+    if (fs.statSync(path.join(localesDir, locale)).isDirectory()) {
+      consolidate(locale);
+    }
+  });
   return gulp.src('app/localization/locales/**/index.json')
     .pipe(gulp.dest('dist/src/resources/locales'));
 }

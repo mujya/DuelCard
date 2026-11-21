@@ -20,12 +20,12 @@ services:
     ports: [3000:3000]
     volumes:
       - ./dist/src:/duelyst/dist/src:z # Serve frontend via API in localdev.
+      - ./serviceAccountKey.json:/duelyst/serviceAccountKey.json:ro
     environment:
-      FIREBASE_CLIENT_EMAIL: ${FIREBASE_CLIENT_EMAIL}
-      FIREBASE_LEGACY_TOKEN: ${FIREBASE_LEGACY_TOKEN}
-      FIREBASE_PRIVATE_KEY: ${FIREBASE_PRIVATE_KEY}
-      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}
+      GOOGLE_APPLICATION_CREDENTIALS: /duelyst/serviceAccountKey.json
       FIREBASE_URL: ${FIREBASE_URL}
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}
+      TOKEN_SECRET: ${TOKEN_SECRET}
       POSTGRES_CONNECTION: "pg://duelyst:duelyst@db/duelyst"
       REDIS_HOST: redis
     depends_on: [db, redis]
@@ -36,9 +36,14 @@ services:
       dockerfile: docker/game.Dockerfile
     working_dir: /duelyst
     ports: [8001:8001]
+    volumes:
+      - ./serviceAccountKey.json:/duelyst/serviceAccountKey.json:ro
     environment:
       REDIS_HOST: redis
-      FIREBASE_LEGACY_TOKEN: ${FIREBASE_LEGACY_TOKEN}
+      GOOGLE_APPLICATION_CREDENTIALS: /duelyst/serviceAccountKey.json
+      FIREBASE_URL: ${FIREBASE_URL}
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}
+      TOKEN_SECRET: ${TOKEN_SECRET}
     depends_on: [redis]
 
   sp:
@@ -47,9 +52,14 @@ services:
       dockerfile: docker/sp.Dockerfile
     working_dir: /duelyst
     ports: [8000:8000]
+    volumes:
+      - ./serviceAccountKey.json:/duelyst/serviceAccountKey.json:ro
     environment:
       REDIS_HOST: redis
-      FIREBASE_LEGACY_TOKEN: ${FIREBASE_LEGACY_TOKEN}
+      GOOGLE_APPLICATION_CREDENTIALS: /duelyst/serviceAccountKey.json
+      FIREBASE_URL: ${FIREBASE_URL}
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}
+      TOKEN_SECRET: ${TOKEN_SECRET}
     depends_on: [redis]
 
   worker:
@@ -57,11 +67,12 @@ services:
       context: .
       dockerfile: docker/worker.Dockerfile
     working_dir: /duelyst
+    volumes:
+      - ./serviceAccountKey.json:/duelyst/serviceAccountKey.json:ro
     environment:
-      FIREBASE_CLIENT_EMAIL: ${FIREBASE_CLIENT_EMAIL}
-      FIREBASE_PRIVATE_KEY: ${FIREBASE_PRIVATE_KEY}
-      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}
+      GOOGLE_APPLICATION_CREDENTIALS: /duelyst/serviceAccountKey.json
       FIREBASE_URL: ${FIREBASE_URL}
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}
       POSTGRES_CONNECTION: "pg://duelyst:duelyst@db/duelyst"
       REDIS_HOST: redis
     depends_on: [db, redis]
@@ -112,3 +123,12 @@ services:
       REDIS_HOST: redis
     depends_on: [db, redis]
     entrypoint: ["yarn", "test:integration"]
+
+# Host uses a PPPoE link (MTU 1492); Docker's default bridge MTU 1500 makes
+# large packets to the Firebase Realtime Database stall, which hangs every
+# login/registration (they write to Firebase). Keep the bridge below the path MTU.
+networks:
+  default:
+    driver: bridge
+    driver_opts:
+      com.docker.network.driver.mtu: "1400"

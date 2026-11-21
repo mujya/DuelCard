@@ -150,7 +150,7 @@ var SettingsMenuView = Backbone.Marionette.ItemView.extend({
     this.ui.$bloom.attr('step', 0.05);
 
     this.ui.$resolution.val(parseFloat(CONFIG.resolution));
-    var currentLanguageKey = Storage.get('preferredLanguageKey') || 'en';
+    var currentLanguageKey = Storage.get('preferredLanguageKey') || 'zh-CN';
     this.ui.$language.val(currentLanguageKey);
     this.ui.$checkboxHiDPIEnabled.prop('checked', CONFIG.hiDPIEnabled);
     this.ui.$bloom.val(parseFloat(this.model.get('bloom')));
@@ -269,7 +269,7 @@ var SettingsMenuView = Backbone.Marionette.ItemView.extend({
 
   changeLanguage: function () {
     var languageKey = this.ui.$language.val();
-    var currentLanguageKey = Storage.get('preferredLanguageKey') || 'en';
+    var currentLanguageKey = Storage.get('preferredLanguageKey') || 'zh-CN';
     if (currentLanguageKey != languageKey) {
       Storage.set('preferredLanguageKey', languageKey);
       EventBus.getInstance().trigger(EVENTS.request_reload, { id: 'language_changed', message: 'Language Changed.  Please restart.' });

@@ -78,6 +78,11 @@ const config = convict({
       default: false,
       env: 'FIREBASE_LOGGING_ENABLED',
     },
+    webApiKey: {
+      doc: 'Web API key of the Firebase project (client SDK config, not a secret).',
+      default: '',
+      env: 'FIREBASE_API_KEY',
+    },
   },
   jwt: {
     tokenExpiration: {
@@ -85,11 +90,22 @@ const config = convict({
       default: '14d',
       env: 'TOKEN_EXPIRES',
     },
+    secretKey: {
+      doc: 'HS256 secret used to sign and verify server-issued JWTs. Falls back to the deprecated FIREBASE_LEGACY_TOKEN for existing deployments.',
+      default: process.env.TOKEN_SECRET || process.env.FIREBASE_LEGACY_TOKEN || '',
+      env: 'TOKEN_SECRET',
+    },
   },
   cdn: {
     doc: 'CDN / S3 url. Default is blank.',
     default: '',
     env: 'CDN_URL',
+  },
+  serveLocalAssets: {
+    doc: 'Serve the web client from the local dist/src directory instead of downloading it from the CDN. Useful for single-server self-hosting without S3/CloudFront.',
+    format: Boolean,
+    default: false,
+    env: 'SERVE_LOCAL_ASSETS',
   },
   aws: {
     assetsBucketName: {

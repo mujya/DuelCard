@@ -28,6 +28,7 @@ UsersModule = require '../lib/data_access/users'
 ReferralsModule = require '../lib/data_access/referrals'
 InventoryModule = require '../lib/data_access/inventory'
 SyncModule = require '../lib/data_access/sync'
+DuelystFirebaseModule = require '../lib/duelyst_firebase_module.coffee'
 AnalyticsUtil = require '../../app/common/analyticsUtil'
 
 # Configuration object
@@ -64,6 +65,7 @@ Log a user in (firing sync jobs) and generate a response (token)
 Possibly add param in return data to say username is null? OR just allow client to decode token
 ###
 logUserIn = (id) ->
+  username = null
   return UsersModule.userDataForId(id)
   .bind {}
   .then (data) ->
@@ -73,25 +75,33 @@ logUserIn = (id) ->
     if data.is_suspended
       throw new Errors.AccountDisabled("This account has been suspended. Reason: #{data.suspended_memo}")
 
+    username = data.username || null
     payload =
       d:
         id: id
-        username: data.username || null
+        username: username
       v: 0
       iat: Math.floor(new Date().getTime() / 1000)
     options =
       expiresIn: config.get('jwt.tokenExpiration')
       algorithm: 'HS256'
 
-    @token = jwt.sign(payload, config.get('firebase.legacyToken'), options)
+    @token = jwt.sign(payload, config.get('jwt.secretKey'), options)
     @analyticsData = analyticsDataFromUserData(data)
     return UsersModule.bumpSessionCountAndSyncDataIfNeeded(id, data)
   .then (synced) ->
     @synced = synced
     return UsersModule.createDaysSeenOnJob(id)
   .then () ->
+    # A Firebase Auth custom token lets the client sign in to the Realtime
+    # Database; the API token above stays the credential for our own API.
+    return DuelystFirebaseModule.createCustomToken(id, {id: id, username: username})
+  .then (firebaseToken) ->
     return {
       token: @token,
+      firebase_token: firebaseToken,
+      user_id: id,
+      username: username,
       synced: @synced,
       analytics_data: @analyticsData
     }
@@ -166,7 +176,7 @@ router.post "/session/", (req, res, next) ->
         algorithm: 'HS256'
 
       # We are encoding the payload inside the token
-      @.token = jwt.sign(payload, config.get('firebase.legacyToken'), options)
+      @.token = jwt.sign(payload, config.get('jwt.secretKey'), options)
 
       # make a db transaction/ledger event for the login
       # UsersModule.logEvent(@id,"session","login")
@@ -175,9 +185,17 @@ router.post "/session/", (req, res, next) ->
   .then ()->
     return UsersModule.createDaysSeenOnJob(@id)
   .then ()->
+    return DuelystFirebaseModule.createCustomToken(@id, {id: @id, username: @userRow.username})
+  .then (firebaseToken)->
     analyticsData = analyticsDataFromUserData(@userRow)
-    # Send token
-    return res.status(200).json({token: @.token, analytics_data: analyticsData})
+    # Send tokens: API JWT for our API, Firebase custom token for the database.
+    return res.status(200).json({
+      token: @.token,
+      firebase_token: firebaseToken,
+      user_id: @id,
+      username: @userRow.username,
+      analytics_data: analyticsData
+    })
   .catch Errors.AccountDisabled, (e) ->
     return res.status(401).json({message: e.message})
   .catch Errors.NotFoundError, (e) ->
@@ -306,7 +324,10 @@ router.post "/session/change_username", isSignedIn, (req, res, next) ->
 
   UsersModule.changeUsername(user_id,new_username)
   .then () ->
-    return res.status(200).json({})
+    # Username lives in the Firebase token claims, so hand back a fresh token.
+    return DuelystFirebaseModule.createCustomToken(user_id, {id: user_id, username: new_username})
+  .then (firebaseToken) ->
+    return res.status(200).json({firebase_token: firebaseToken})
   .catch Errors.AlreadyExistsError, (e) ->  # Specific error if the username already exists
     Logger.module("Session").error "can not change username to #{new_username.blue} as it already exists".red
     return res.status(400).json(e)

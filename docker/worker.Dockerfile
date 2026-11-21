@@ -1,6 +1,8 @@
 FROM node:24-bookworm-slim
 
 WORKDIR /duelyst
+# Native modules (bcrypt) have no Node 24 prebuilt binary, so node-gyp needs a toolchain.
+RUN apt update && apt -y install python3 make gcc g++
 COPY package.json /duelyst/
 COPY .yarnrc.yml /duelyst/
 COPY yarn.lock /duelyst/

@@ -1,0 +1,20 @@
+{
+	"gauntlet_title":"竞技场",
+	"gauntlet_instructions":"在竞技场中展现你的实力，使用30张卡的牌组与其他玩家战斗，每一场胜利都会给你带来更多的奖励，输掉3局就会被淘汰",
+	"gauntlet_start_instructions":"花费{{gold_price}}金币开始一轮试炼场，或花费{{hard_currency_price}}购买门票。",
+	"ticket_inventory_label":"你有{{count}}张门票",
+	"ticket_inventory_label_plural":"你拥有{{count}}张门票",
+	"start_button_label":"开始",
+	"start_error_message_insufficient_gold":"你的金币不足，无法开始试炼场。",
+	"start_error_message_generic":"Oops... there was a problem starting your Gauntlet run. 请再试一次。",
+	"select_faction_label":"选择你的阵营",
+	"select_general_label":"选择你的将军",
+	"select_card_label":"选择一张卡牌",
+	"resign_run_button_label":"放弃本轮",
+	"resign_confirmation_message":"你确定你想要放弃吗？",
+	"claim_rewards_win_count_label":"{{count}}胜",
+	"claim_rewards_win_count_label_plural":"{{count}}胜",
+	"claim_rewards_button_label":"领取奖励",
+	"win_loss_label":"胜场：{{win_count}}   败场：{{loss_count}}",
+	"no_available_gauntlet_decks":"你最近没有竞技场牌组。"
+}
