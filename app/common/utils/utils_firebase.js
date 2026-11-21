@@ -1,8 +1,11 @@
-const { Base64 } = require('js-base64');
-
 exports.pathName = function (ref) {
-  const p = ref.parent().name();
-  return (p ? `${p}/` : '') + ref.name();
+  const parent = typeof ref.parent === 'function' ? ref.parent() : ref.parent;
+  let p = null;
+  if (parent) {
+    p = typeof parent.key === 'string' ? parent.key : parent.name();
+  }
+  const k = typeof ref.key === 'string' ? ref.key : ref.name();
+  return (p ? `${p}/` : '') + k;
 };
 
 exports.getNumChildren = function (ref, callback) {

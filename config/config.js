@@ -42,10 +42,25 @@ const config = convict({
   },
   firebase: {
     url: {
-      doc: 'Firebase URL, e.g. https://my-duelyst-project-12345.firebaseio.com/',
+      doc: 'Firebase Realtime Database URL, e.g. https://my-duelyst-project-default-rtdb.asia-southeast1.firebasedatabase.app/',
       // format: "url",
       default: '',
       env: 'FIREBASE_URL',
+    },
+    apiKey: {
+      doc: 'Firebase Web App API key (required by Firebase v8 client SDK).',
+      default: '',
+      env: 'FIREBASE_API_KEY',
+    },
+    authDomain: {
+      doc: 'Firebase Auth domain (optional, defaults to <projectId>.firebaseapp.com).',
+      default: '',
+      env: 'FIREBASE_AUTH_DOMAIN',
+    },
+    region: {
+      doc: 'Firebase Realtime Database region.',
+      default: 'asia-southeast1',
+      env: 'FIREBASE_REGION',
     },
     legacyToken: {
       doc: 'Firebase legacy token, e.g. abcdefg1234567890abcdefg1234567890',
@@ -77,11 +92,6 @@ const config = convict({
       doc: 'Enable logging in the Firebase Admin SDK.',
       default: false,
       env: 'FIREBASE_LOGGING_ENABLED',
-    },
-    webApiKey: {
-      doc: 'Web API key of the Firebase project (client SDK config, not a secret).',
-      default: '',
-      env: 'FIREBASE_API_KEY',
     },
   },
   jwt: {

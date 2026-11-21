@@ -225,7 +225,7 @@ var ChatManager = Manager.extend({
     if (ProfileManager.getInstance().profile.get('doNotDisturb')) {
       // defer rejection because this is a direct response to an event
       _.defer(function () {
-        snapshot.ref().remove();
+        snapshot.ref.remove();
       });
     } else {
       // create a notification
@@ -234,7 +234,7 @@ var ChatManager = Manager.extend({
         type: NotificationsManager.NOTIFICATION_BUDDY_INVITE,
         ctaTitle: 'Accept',
         data: snapshot.val(),
-        firebaseRef: snapshot.ref(),
+        firebaseRef: snapshot.ref,
       });
 
       // listen to changes to the notification, such as knowing that the CTA has been clicked or dismissed

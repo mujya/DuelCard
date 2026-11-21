@@ -47,3 +47,20 @@ serviceAccountKey.dev.json
 开发资源/
 
 .buildhome/
+
+# Per-environment config (commit only the *.example files)
+.env.development
+.env.production
+!.env.*.example
+serviceAccountKey*.json
+
+# Local build/debug artifacts
+.corepack/
+.sdk_patch/
+.tmp_sdk/
+.yarn/
+.server_key
+.server_key.pub
+*.log
+
+.yarn-global/

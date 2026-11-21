@@ -39,6 +39,7 @@
     * helper can be removed.
     */
     _getKey: function(refOrSnapshot) {
+      if (typeof refOrSnapshot.key === 'string') return refOrSnapshot.key;
       return (typeof refOrSnapshot.key === 'function') ? refOrSnapshot.key() : refOrSnapshot.name();
     },
 
@@ -81,11 +82,11 @@
 
     create: function(model, cb) {
       if (!model.id) {
-        model.id = this._getKey(this._fbref.ref().push());
+        model.id = this._getKey((typeof this._fbref.ref === 'function' ? this._fbref.ref() : this._fbref.ref).push());
       }
 
       var val = model.toJSON();
-      this._fbref.ref().child(model.id).set(val, _.bind(function(err) {
+      (typeof this._fbref.ref === 'function' ? this._fbref.ref() : this._fbref.ref).child(model.id).set(val, _.bind(function(err) {
         if (!err) {
           cb(null, val);
         } else {
@@ -113,7 +114,7 @@
 
     update: function(model, cb) {
       var val = model.toJSON();
-      this._fbref.ref().child(model.id).update(val, function(err) {
+      (typeof this._fbref.ref === 'function' ? this._fbref.ref() : this._fbref.ref).child(model.id).update(val, function(err) {
         if (!err) {
           cb(null, val);
         } else {
@@ -123,7 +124,7 @@
     },
 
     "delete": function(model, cb) {
-      this._fbref.ref().child(model.id).remove(function(err) {
+      (typeof this._fbref.ref === 'function' ? this._fbref.ref() : this._fbref.ref).child(model.id).remove(function(err) {
         if (!err) {
           cb(null, model);
         } else {
@@ -246,7 +247,7 @@
 
       for (var i = 0; i < parsed.length; i++) {
         var model = parsed[i];
-        var childRef = this.firebase.ref().child(model.id);
+        var childRef = (typeof this.firebase.ref === 'function' ? this.firebase.ref() : this.firebase.ref).child(model.id);
         if (options.silent === true) {
           this._suppressEvent = true;
         }
@@ -264,7 +265,7 @@
 
       for (var i = 0; i < parsed.length; i++) {
         var model = parsed[i];
-        var childRef = this.firebase.ref().child(model.id);
+        var childRef = (typeof this.firebase.ref === 'function' ? this.firebase.ref() : this.firebase.ref).child(model.id);
         if (options.silent === true) {
           this._suppressEvent = true;
         }
@@ -318,7 +319,7 @@
           model = model.toJSON();
         }
         if (!model.id) {
-          model.id = Backbone.Firebase.prototype._getKey(this.firebase.ref().push());
+          model.id = Backbone.Firebase.prototype._getKey((typeof this.firebase.ref === 'function' ? this.firebase.ref() : this.firebase.ref).push());
         }
         ret.push(model);
       }
@@ -413,12 +414,12 @@
         // Special case if ".priority" was updated - a merge is not
         // allowed so we'll have to do a full setWithPriority.
         if (_.has(updateAttributes, ".priority")) {
-          var ref = this.firebase.ref().child(model.id);
+          var ref = (typeof this.firebase.ref === 'function' ? this.firebase.ref() : this.firebase.ref).child(model.id);
           var priority = localAttributes[".priority"];
           delete localAttributes[".priority"];
           ref.setWithPriority(localAttributes, priority);
         } else {
-          this.firebase.ref().child(model.id).update(updateAttributes);
+          (typeof this.firebase.ref === 'function' ? this.firebase.ref() : this.firebase.ref).child(model.id).update(updateAttributes);
         }
       }
     },
@@ -428,7 +429,7 @@
       options = options ? _.clone(options) : {};
       options.success =
         _.isFunction(options.success) ? options.success : function() {};
-      var childRef = this.firebase.ref().child(model.id);
+      var childRef = (typeof this.firebase.ref === 'function' ? this.firebase.ref() : this.firebase.ref).child(model.id);
       childRef.set(null, _.bind(options.success, model));
     },
 
@@ -445,7 +446,7 @@
 
     destroy: function(options) {
       // TODO: Fix naive success callback. Add error callback.
-      this.firebase.ref().set(null, this._log);
+      (typeof this.firebase.ref === 'function' ? this.firebase.ref() : this.firebase.ref).set(null, this._log);
       this.trigger("destroy", this, this.collection, options);
       if (options.success) {
         options.success(this, null, options);
@@ -508,7 +509,7 @@
         }
       });
       if (_.size(modelObj)) {
-        this.firebase.ref().update(modelObj, this._log);
+        (typeof this.firebase.ref === 'function' ? this.firebase.ref() : this.firebase.ref).update(modelObj, this._log);
       }
     },
 

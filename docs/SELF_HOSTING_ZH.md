@@ -109,8 +109,9 @@ Caddy 会自动申请/续期 Let's Encrypt 证书，并反代三个端口。
 
 ### 4.1 Firebase（免费）
 
-1. 建一个 Firebase 项目，创建 **Realtime Database**，区域必须选 **United States (US Central)**；
-   新加坡/欧洲区的 URL 与这套旧版 Firebase 客户端不兼容。
+1. 建一个 Firebase 项目，创建 **Realtime Database**。客户端已升级到 Firebase JS SDK 8，
+   支持区域域名（推荐 `asia-southeast1`，即
+   `https://<项目>-default-rtdb.asia-southeast1.firebasedatabase.app/`），不再要求 US Central。
 2. 把仓库根目录的 [`firebaseRules.json`](../firebaseRules.json) 内容粘贴到 Realtime Database 的 Rules 里并发布。
 3. 项目设置 → 常规 → 复制 **Web API Key**（构建客户端用，不是机密）。
 4. 项目设置 → 服务账号 → 生成新的私钥，保存为仓库根目录的 `serviceAccountKey.json`
@@ -177,15 +178,17 @@ corepack yarn install
 yarn tsc:chroma-js
 
 NODE_ENV=production \
-FIREBASE_URL="https://你的项目-default-rtdb.firebaseio.com/" \
+FIREBASE_URL="https://你的项目-default-rtdb.asia-southeast1.firebasedatabase.app/" \
 FIREBASE_API_KEY="你的 Firebase Web API Key" \
+FIREBASE_PROJECT_ID="你的 Firebase 项目 ID" \
 API_URL="https://play.example.com" \
 yarn build
 ```
 
 要点：
 
-- `FIREBASE_URL` **必须以 `/` 结尾**，且必须是 `firebaseio.com` 域名（构建脚本会校验）。
+- `FIREBASE_URL` 建议以 `/` 结尾（构建脚本会补齐）；区域域名（`*.asia-southeast1.firebasedatabase.app/`）与 `*.firebaseio.com` 都可用。
+- `FIREBASE_API_KEY`（Web API Key）与 `FIREBASE_PROJECT_ID` 必填，`FIREBASE_AUTH_DOMAIN` 可选。
 - `API_URL` 填最终玩家访问的地址，**不要带结尾斜杠**。它会被写死进 `duelyst.js`。
 - 生产构建会强制 WebSocket 使用 `wss://`，所以必须配 TLS（Caddy 已处理）。
 - 构建完成后产物在 `dist/src`，约 500 MB；`dist/src/index.html` 必须存在。

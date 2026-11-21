@@ -20,6 +20,7 @@ import envify from 'envify/custom';
 import babelify from 'babelify';
 import uglifyify from 'uglifyify';
 import bundleCollapser from 'bundle-collapser/plugin';
+import firebaseEsm from './firebase_esm';
 import {
   opts, config, env, version, production, staging, development,
 } from './shared';
@@ -47,17 +48,27 @@ if (opts.watch) {
   bundler = watchify(bundler);
 }
 
+// Normalize the database URL once so the client always gets a trailing slash.
+let firebaseUrl = config.get('firebase.url') || '';
+if (firebaseUrl && !firebaseUrl.endsWith('/')) {
+  firebaseUrl = `${firebaseUrl}/`;
+}
+
 // Apply bundler transforms
 // bundler.transform(aliasify, aliasConfig)
 bundler.transform(coffeeify);
+bundler.transform(firebaseEsm, { global: true });
 bundler.transform(hbsfy);
 bundler.transform(glslify);
 bundler.transform(envify({
   NODE_ENV: env,
   VERSION: version,
   API_URL: config.get('api'),
-  FIREBASE_URL: config.get('firebase.url'),
-  FIREBASE_API_KEY: config.get('firebase.webApiKey'),
+  FIREBASE_URL: firebaseUrl,
+  FIREBASE_API_KEY: config.get('firebase.apiKey'),
+  FIREBASE_AUTH_DOMAIN: config.get('firebase.authDomain'),
+  FIREBASE_PROJECT_ID: config.get('firebase.projectId'),
+  FIREBASE_REGION: config.get('firebase.region'),
   ALL_CARDS_AVAILABLE: config.get('allCardsAvailable'),
   AI_TOOLS_ENABLED: config.get('aiToolsEnabled'),
   RECORD_CLIENT_LOGS: config.get('recordClientLogs'),

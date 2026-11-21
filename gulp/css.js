@@ -20,14 +20,18 @@ export default function css() {
     .pipe(sass({
       includePaths: ['./app/vendor', './node_modules'],
     }))
-    .pipe(autoprefixer('last 1 version', '> 1%', 'ie 8', 'ie 7'))
+    // autoprefixer disabled: gulp-autoprefixer@2 is incompatible with
+    // current browserslist/caniuse data (build crashes on old CSS).
     .pipe(rename((p) => {
       p.basename = 'duelyst';
       return p.basename;
     }))
-  // This is where we replace our CSS urls with CDN urls
+  // This is where we replace our CSS urls with CDN urls.
+  // Skip the rework step entirely when no CDN is configured: gulp-rework's
+  // transform is broken on current Node (it calls its callback twice), and
+  // with an empty cdn setting it is a no-op anyway.
     .pipe(gif(
-      production || staging,
+      (production || staging) && config.get('cdn') !== '',
       rework(reworkUrl((url) => {
         if (url.indexOf('resources') >= 0 && config.get('cdn') !== '') {
           // gutil.log(`${config.get('cdn')}/${url}`)

@@ -45,7 +45,8 @@ Backbone.DuelystFirebase.Model = Backbone.Firebase.Model.extend({
       }
     });
     if (_.size(modelObj)) {
-      this.firebase.ref().update(modelObj, this._log);
+      var fbRef = typeof this.firebase.ref === 'function' ? this.firebase.ref() : this.firebase.ref;
+      fbRef.update(modelObj, this._log);
     }
   },
 

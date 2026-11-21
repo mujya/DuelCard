@@ -57,8 +57,9 @@ is a free service which requires a Google Firebase account.
 
 Create a Google Firebase account, a Firebase project, and a Firebase Realtime
 Database. Be sure to create the Realtime Database in the US Central region, as
-the Europe and Singapore regions will give you a URL which is incompatible with
-our Firebase client.
+Singapore (`asia-southeast1`) and other regional Realtime Database URLs
+(e.g. `https://<your-database>-default-rtdb.asia-southeast1.firebasedatabase.app/`)
+are supported.
 
 Once you have created a Firebase account and a Realtime Database, take note of
 your Realtime Database's URL, as you'll need it when building the code. You
@@ -73,8 +74,11 @@ configuration needed. From your Firebase project settings page, click the
 
 First, click "Database Secrets" and create a new legacy token.
 Create a file named `.env` in the repo root with the following contents:
+Also grab your Web App `apiKey` from Firebase Project Settings > General > Your apps (Web app):
 ```bash
 FIREBASE_URL=<YOUR_FIREBASE_URL>
+FIREBASE_API_KEY=<YOUR_FIREBASE_WEB_API_KEY>
+FIREBASE_REGION=asia-southeast1
 FIREBASE_LEGACY_TOKEN=<YOUR_FIREBASE_LEGACY_TOKEN>
 ```
 
@@ -112,9 +116,11 @@ corepack yarn tsc:chroma-js
 cross-env FIREBASE_URL=<your-firebase-url> corepack yarn build
 ```
 
-The value of `<your-firebase-url>` should be
-`https://<your-database>-default-rtdb.firebaseio.com/`, including the trailing
-slash. Including the Firebase URL here enables the game client to communicate
+The value of `<your-firebase-url>` can be a regional URL such as
+`https://<your-database>-default-rtdb.asia-southeast1.firebasedatabase.app/`
+(or `https://<your-database>-default-rtdb.firebaseio.com/`), including the trailing
+slash. Be sure `FIREBASE_API_KEY` and `FIREBASE_PROJECT_ID` are also set in `.env`
+or passed during the build. Including the Firebase URL here enables the game client to communicate
 with the server code.
 
 ## Building Desktop Clients <a id="desktop" />
