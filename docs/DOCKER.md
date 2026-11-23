@@ -1,90 +1,41 @@
-# Building and Testing Docker Images
+# Docker 本地开发说明
 
-Dockerfiles and scripts for starting and managing our containers are located in
-the `docker/` directory.
+本项目在 `docker/` 目录维护各服务的 Dockerfile，并通过根目录的 `docker-compose.yaml` 编排本地开发环境。
 
-## Local Development
+## 1. 常用本地命令
 
-Use `docker compose up migrate` to run database migrations.
-Then use `docker compose up` to start all services locally.
+```bash
+# 初始化 / 执行最新数据库迁移
+docker compose up migrate
 
-## Testing Container Builds
+# 启动全部本地服务（api / sp / game / worker / db / redis）
+docker compose up
 
-Build a container image:
+# 后台启动并查看指定服务日志
+docker compose up -d
+docker compose logs -f api sp game worker
+
+# 停止并移除容器（保留 .pgdata 数据）
+docker compose down
 ```
-# <service> should be one of ('api', 'game', 'sp', 'worker')
-# <version> should match the latest git release; defaults to 'testing'
-scripts/build_container.sh <service> <version>
+
+## 2. 单独构建与调试镜像
+
+使用 `scripts/build_container.sh` 可单独构建某个服务的镜像：
+
+```bash
+# <service> 可选：api | game | sp | worker
+scripts/build_container.sh <service> testing
 ```
 
-Test a container image:
-```
-# This should successfully start the SP server.
-# Ctrl-C should successfully terminate the container.
+单独运行镜像验证启动（如 `sp`）：
+
+```bash
 docker run -it duelyst-sp
 ```
 
-## Publishing Containers to ECR
+## 3. 注意事项
 
-Tag and publish a container image:
-```
-# <service> should be one of ('api', 'game', 'sp', 'worker')
-# <version> should match the latest git release
-# <registry> is your AWS ECR registry alias
-# <repo> is your AWS ECR repository name
-scripts/publish_container.sh <service> <version> <registry> <repo>
-```
-
-## Notes on Image Sizes
-
-There are a few strategies we use to keep image sizes small:
-
-1. Use an alternative base image, i.e. `node:18-slim` instead of `node:18`
-2. Avoid installing Node.js `devDependencies` in container builds
-3. Purge the Yarn cache from container builds
-
-#### Comparison of Base Images
-
-Sizes of Docker images built by `scripts/build_container.sh`:
-
-| Service | Image          | Size    | ECR Size | 50 GB Limit |
-|---------|----------------|---------|----------|-------------|
-| Node.js | node:18        | 942 MB  | N/A      | N/A         |
-| Node.js | node:18-slim   | 234 MB  | N/A      | N/A         |
-| Node.js | node:18-alpine | 165 MB  | N/A      | N/A         |
-| Node.js | node:16        | 858 MB  | N/A      | N/A         |
-| Node.js | node:16-slim   | 174 MB  | N/A      | N/A         |
-| Node.js | node:16-alpine | 114 MB  | N/A      | N/A         |
-| API     | node:18        | 1170 MB | 425 MB   | 117 / 23 ea |
-| API     | node:18-slim   | 767 MB  | 254 MB   | 196 / 39 ea |
-| API     | node:18-alpine | 626 MB  | 187 MB   | 267 / 53 ea |
-| API     | node:16        | 1040 MB | 396 MB   | 126 / 25 ea |
-| API     | node:16-slim   | 615 MB  | 214 MB   | 233 / 46 ea |
-| API     | node:16-alpine | 530 MB  | 169 MB   | 295 / 59 ea |
-
-Image sizes reported by `docker image ls` include all layers, and are much
-higher than the image sizes reported by ECR. ECR gives us 50 GB of storage
-for free, so the 50 GB Limit column shows how many total images we can store
-for each image, and how many we can store for each of the five services we
-build.
-
-The `-alpine` images pull Node.js builds from unofficial-builds.nodejs.org,
-while the default and `-slim` images pull official builds from nodejs.org.
-While the `-slim` images are 25-35% larger than the `-alpine` images, they're
-still small enough to allow us to store several dozen versions in ECR before we
-start to approach the 50 GB ECR limit. Additionally, the `-slim` images are
-based on Debian, which comes with a more familiar toolchain.
-
-Similarly, Node.js v18 images are 10-20% larger than Node.js v16 images, but we
-may be able to get some of this size back by replacing Mocha, Axios, and other
-dependencies with their new native counterparts in Node.js v18.
-
-#### Regarding `bcrypt`
-
-We could further reduce image sizes by removing the `bcrypt` dependencies from
-the base image layer. These currently include `python3`, `make`, `gcc`, and
-`g++`. The `bcrypt` dependency is only used by the API service, during the
-login flow in `server/routes/session.coffee`. One option here could be to move
-authentication flows (such as JWT signing, granting, and validation) to their
-own microservice to isolate this dependency, reducing the image size of all
-other services.
+- 本地 Postgres 数据挂载在根目录 `.pgdata/`（已被 `.gitignore` 忽略）。
+- 修改后端 CoffeeScript/JS 代码后，如容器未热重载，需重启对应服务（`docker compose restart api` 等）。
+- 修改前端代码后，需在宿主机重新运行 `yarn build` 更新 `dist/src`。

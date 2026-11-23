@@ -1,7 +1,17 @@
 # Secrets
 .env
 .env_for_alpha
-serviceAccountKey.json
+.env.development
+.env.production
+!.env.*.example
+serviceAccountKey*.json
+.gh-token
+.github_deploy_key
+.github_deploy_key.pub
+.server_key
+.server_key.pub
+.ssh/
+*.pem
 
 # Build artifacts
 /app/data/packages.js
@@ -9,58 +19,31 @@ serviceAccountKey.json
 /dist
 node_modules
 .awspublish*
+.babel-cache.json
+.sass-cache
 
-# Development artifacts
+# Unified local dev scratch directory (only README.md is tracked)
+.dev-tmp/*
+!.dev-tmp/README.md
+
+# Development artifacts & caches
 *.log
 *.log.txt
 dump.rdb
 .foreman
 .idea/
 .node-version
-.sass-cache
-.tmp
 .vagrant/
 .vscode
 /.pgdata
-.yarn/install-state.gz
+.yarn/
+.corepack/
+.codegraph/
+.buildhome/
+.yarn-global/
 
 # OSX-specific artifacts
 .DS_Store
 
-# Local SSH keys
-.ssh/
-
-# Local secrets / keys
-.gh-token
-.github_deploy_key
-.github_deploy_key.pub
-serviceAccountKey.dev.json
-*.pem
-
-# Local tooling / scratch
-.l10n_tmp/
-.codegraph/
-.babel-cache.json
-.ec2key
-
-# Community localization source bundles (kept out of git)
+# Community localization & local reference resources (kept out of git)
 开发资源/
-
-.buildhome/
-
-# Per-environment config (commit only the *.example files)
-.env.development
-.env.production
-!.env.*.example
-serviceAccountKey*.json
-
-# Local build/debug artifacts
-.corepack/
-.sdk_patch/
-.tmp_sdk/
-.yarn/
-.server_key
-.server_key.pub
-*.log
-
-.yarn-global/
