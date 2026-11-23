@@ -12,7 +12,7 @@
     <!-- https://developer.mozilla.org/en-US/docs/Web/Guide/Mobile -->
 
     <!-- https://developer.mozilla.org/en-US/docs/Web/HTML/Viewport_meta_tag -->
-    <meta name="viewport" content="width=device-width, initial-scale=0.1, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta id="duelyst-viewport" name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 
     <!-- https://developer.mozilla.org/en-US/docs/Web/API/CSS_Object_Model/Managing_screen_orientation -->
     <!-- Note: The orientation API may not be supported by Safari on Mac/iOS -->
@@ -165,11 +165,25 @@
         var enterBtn = document.getElementById('mobile-landscape-btn');
         var skipBtn = document.getElementById('mobile-landscape-skip');
         var fab = document.getElementById('mobile-fullscreen-fab');
+        var viewportMeta = document.getElementById('duelyst-viewport');
         var docEl = document.documentElement;
         var skipped = false;
 
         var reqFs = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.msRequestFullscreen;
         var supportsFs = typeof reqFs === 'function';
+
+        function applyMobileViewport(forLandscapeGame) {
+          if (!viewportMeta) return;
+          if (forLandscapeGame) {
+            var longSide = Math.max(window.screen.width || 1280, window.screen.height || 720);
+            var shortSide = Math.min(window.screen.width || 1280, window.screen.height || 720);
+            var aspect = shortSide > 0 ? (longSide / shortSide) : (16 / 9);
+            var targetWidth = Math.max(1280, Math.round(720 * aspect));
+            viewportMeta.setAttribute('content', 'width=' + targetWidth + ', user-scalable=no, viewport-fit=cover');
+          } else {
+            viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
+          }
+        }
 
         function isFullscreen() {
           return !!(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
@@ -212,6 +226,7 @@
           var portrait = isPortrait();
           var fs = isFullscreen();
           if (portrait && !skipped) {
+            applyMobileViewport(false);
             if (!supportsFs) {
               desc.textContent = '当前浏览器不支持网页自动全屏，请手动横置手机游玩';
               enterBtn.style.display = 'none';
@@ -222,6 +237,7 @@
             overlay.classList.add('visible');
             fab.classList.remove('visible');
           } else {
+            applyMobileViewport(true);
             overlay.classList.remove('visible');
             if (supportsFs && !fs) {
               fab.classList.add('visible');

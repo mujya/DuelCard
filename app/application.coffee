@@ -3493,7 +3493,8 @@ App.onResize = (e) ->
   # force user to restart if resource scale for engine has changed
   # CSS automatically handles resource scale changes
   # TODO: instead of restarting, destroy all current views, show loading screen, reload images at new scale, and return to current route
-  App._needsRestart = App._lastResourceScaleEngine? and CONFIG.resourceScaleEngine != App._lastResourceScaleEngine
+  isMobileBrowser = /Android|iPhone|iPad|iPod|Mobile|HarmonyOS/i.test(navigator?.userAgent || '')
+  App._needsRestart = !isMobileBrowser and App._lastResourceScaleEngine? and CONFIG.resourceScaleEngine != App._lastResourceScaleEngine
   if !App._needsRestart
     # cancel forced reload in case user has restored original window size
     App._cancelReloadRequestForResolutionChange()
