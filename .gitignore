@@ -26,6 +26,10 @@ node_modules
 .dev-tmp/*
 !.dev-tmp/README.md
 
+# Local AGY rules (kept out of git)
+docs/AGENT/
+.agents/
+
 # Development artifacts & caches
 *.log
 *.log.txt

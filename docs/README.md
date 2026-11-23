@@ -5,4 +5,3 @@
 - [开发与测试规范](CONTRIBUTING.md) — 代码风格检查（ESLint / CoffeeLint / TS）与测试命令
 - [Docker 本地开发](DOCKER.md) — 本地容器启停、数据库迁移与镜像构建
 - [Gulp 构建说明](GULP.md) — 前端打包流程、核心任务与环境变量注意事项
-- [Agent 协作规则（中文）](AGENT/RULES.zh.md) / [Agent Rules (EN)](AGENT/RULES.en.md) — AGY 遵循的项目规则（中英双语同步维护）
