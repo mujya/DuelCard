@@ -72,10 +72,19 @@
     <!-- end container div -->
 
     <script src="vendor.js" crossorigin></script>
-    <script src="duelyst.js" crossorigin></script>
+    <script src="duelyst.js?v=20261124m2" crossorigin></script>
 
     <!-- Mobile fullscreen & landscape helper (active on mobile devices only) -->
     <style>
+      html.mobile-browser,
+      html.mobile-browser body,
+      html.mobile-browser #app {
+        min-width: 0 !important;
+        min-height: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        overflow: hidden !important;
+      }
       #mobile-landscape-overlay {
         display: none;
         position: fixed;
@@ -160,30 +169,18 @@
         var isMobile = /Android|iPhone|iPad|iPod|Mobile|HarmonyOS/i.test(ua);
         if (!isMobile) return;
 
+        var docEl = document.documentElement;
+        docEl.classList.add('mobile-browser');
+
         var overlay = document.getElementById('mobile-landscape-overlay');
         var desc = document.getElementById('mobile-landscape-desc');
         var enterBtn = document.getElementById('mobile-landscape-btn');
         var skipBtn = document.getElementById('mobile-landscape-skip');
         var fab = document.getElementById('mobile-fullscreen-fab');
-        var viewportMeta = document.getElementById('duelyst-viewport');
-        var docEl = document.documentElement;
         var skipped = false;
 
         var reqFs = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.msRequestFullscreen;
         var supportsFs = typeof reqFs === 'function';
-
-        function applyMobileViewport(forLandscapeGame) {
-          if (!viewportMeta) return;
-          if (forLandscapeGame) {
-            var longSide = Math.max(window.screen.width || 1280, window.screen.height || 720);
-            var shortSide = Math.min(window.screen.width || 1280, window.screen.height || 720);
-            var aspect = shortSide > 0 ? (longSide / shortSide) : (16 / 9);
-            var targetWidth = Math.max(1280, Math.round(720 * aspect));
-            viewportMeta.setAttribute('content', 'width=' + targetWidth + ', user-scalable=no, viewport-fit=cover');
-          } else {
-            viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
-          }
-        }
 
         function isFullscreen() {
           return !!(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
@@ -226,7 +223,6 @@
           var portrait = isPortrait();
           var fs = isFullscreen();
           if (portrait && !skipped) {
-            applyMobileViewport(false);
             if (!supportsFs) {
               desc.textContent = '当前浏览器不支持网页自动全屏，请手动横置手机游玩';
               enterBtn.style.display = 'none';
@@ -237,7 +233,6 @@
             overlay.classList.add('visible');
             fab.classList.remove('visible');
           } else {
-            applyMobileViewport(true);
             overlay.classList.remove('visible');
             if (supportsFs && !fs) {
               fab.classList.add('visible');

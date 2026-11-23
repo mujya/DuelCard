@@ -3517,13 +3517,21 @@ App._resizeAndScale = () ->
   # engine bases its window size on the canvas size
   $html = $("html")
   $canvas = $(CONFIG.GAMECANVAS_SELECTOR)
-  width = Math.max(CONFIG.REF_WINDOW_SIZE.width, $html.width())
-  height = Math.max(CONFIG.REF_WINDOW_SIZE.height, $html.height())
+  isMobileBrowser = /Android|iPhone|iPad|iPod|Mobile|HarmonyOS/i.test(navigator?.userAgent || '')
+  if isMobileBrowser
+    width = Math.max(320, $html.width())
+    height = Math.max(240, $html.height())
+  else
+    width = Math.max(CONFIG.REF_WINDOW_SIZE.width, $html.width())
+    height = Math.max(CONFIG.REF_WINDOW_SIZE.height, $html.height())
   $canvas.width(width)
   $canvas.height(height)
 
   # set global scale
-  CONFIG.globalScale = CONFIG.getGlobalScaleForResolution(CONFIG.resolution, width, height)
+  if isMobileBrowser
+    CONFIG.globalScale = Math.min(width / CONFIG.REF_WINDOW_SIZE.width, height / CONFIG.REF_WINDOW_SIZE.height)
+  else
+    CONFIG.globalScale = CONFIG.getGlobalScaleForResolution(CONFIG.resolution, width, height)
 
   # set css scales
   CONFIG.pixelScaleCSS = CONFIG.globalScale * window.devicePixelRatio
