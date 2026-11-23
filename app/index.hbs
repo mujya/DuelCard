@@ -155,6 +155,9 @@
       #mobile-fullscreen-fab.visible {
         display: block;
       }
+      #mobile-fullscreen-fab.is-fullscreen {
+        opacity: 0.55;
+      }
     </style>
     <div id="mobile-landscape-overlay" role="dialog" aria-modal="true">
       <div class="ml-title">请使用横屏全屏游玩</div>
@@ -219,6 +222,23 @@
           }
         }
 
+        function exitFullscreenMode() {
+          var exitFs = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
+          if (screen.orientation && typeof screen.orientation.unlock === 'function') {
+            try { screen.orientation.unlock(); } catch (e) {}
+          }
+          if (typeof exitFs === 'function' && isFullscreen()) {
+            try {
+              var p = exitFs.call(document);
+              if (p && typeof p.then === 'function') {
+                p.catch(function () {}).then(triggerResize);
+                return;
+              }
+            } catch (e) {}
+          }
+          triggerResize();
+        }
+
         function updateUI() {
           var portrait = isPortrait();
           var fs = isFullscreen();
@@ -234,8 +254,15 @@
             fab.classList.remove('visible');
           } else {
             overlay.classList.remove('visible');
-            if (supportsFs && !fs) {
+            if (supportsFs) {
               fab.classList.add('visible');
+              if (fs) {
+                fab.textContent = '✕ 退出全屏';
+                fab.classList.add('is-fullscreen');
+              } else {
+                fab.textContent = '⛶ 全屏';
+                fab.classList.remove('is-fullscreen');
+              }
             } else {
               fab.classList.remove('visible');
             }
@@ -247,7 +274,11 @@
           setTimeout(updateUI, 400);
         });
         fab.addEventListener('click', function () {
-          enterFullscreenAndLandscape();
+          if (isFullscreen()) {
+            exitFullscreenMode();
+          } else {
+            enterFullscreenAndLandscape();
+          }
           setTimeout(updateUI, 400);
         });
         skipBtn.addEventListener('click', function () {
