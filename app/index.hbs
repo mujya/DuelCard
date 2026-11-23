@@ -12,14 +12,13 @@
     <!-- https://developer.mozilla.org/en-US/docs/Web/Guide/Mobile -->
 
     <!-- https://developer.mozilla.org/en-US/docs/Web/HTML/Viewport_meta_tag -->
-    <meta name="viewport" content="width=device-width, initial-scale=0.1, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=0.1, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 
     <!-- https://developer.mozilla.org/en-US/docs/Web/API/CSS_Object_Model/Managing_screen_orientation -->
     <!-- Note: The orientation API may not be supported by Safari on Mac/iOS -->
     <!-- https://developer.mozilla.org/en-US/docs/Web/API/Screen/orientation#browser_compatibility -->
-    <!-- We don't use the orientation API from CSS -->
-    <!-- Cocos2D may attempt to read orientation to support rotation -->
-    <meta name="screen-orientation" content="portrait"/>
+    <meta name="screen-orientation" content="landscape"/>
+    <meta name="x5-orientation" content="landscape"/>
 
     <!-- Progressive Web App settings -->
     <!-- https://en.wikipedia.org/wiki/Progressive_web_app -->
@@ -74,5 +73,185 @@
 
     <script src="vendor.js" crossorigin></script>
     <script src="duelyst.js" crossorigin></script>
+
+    <!-- Mobile fullscreen & landscape helper (active on mobile devices only) -->
+    <style>
+      #mobile-landscape-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 999999;
+        background: rgba(6, 12, 24, 0.94);
+        color: #e8f1ff;
+        font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 24px;
+        box-sizing: border-box;
+      }
+      #mobile-landscape-overlay.visible {
+        display: flex;
+      }
+      #mobile-landscape-overlay .ml-title {
+        font-size: 22px;
+        font-weight: 600;
+        margin-bottom: 12px;
+        letter-spacing: 1px;
+      }
+      #mobile-landscape-overlay .ml-desc {
+        font-size: 14px;
+        color: #9fb7d9;
+        margin-bottom: 24px;
+        line-height: 1.6;
+        max-width: 320px;
+      }
+      #mobile-landscape-btn {
+        background: linear-gradient(135deg, #00b4ff, #0066ff);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 14px 28px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 4px 16px rgba(0, 140, 255, 0.4);
+      }
+      #mobile-landscape-skip {
+        margin-top: 16px;
+        background: transparent;
+        border: none;
+        color: #7d96b8;
+        font-size: 13px;
+        text-decoration: underline;
+        cursor: pointer;
+      }
+      #mobile-fullscreen-fab {
+        display: none;
+        position: fixed;
+        top: 10px;
+        right: 12px;
+        z-index: 999998;
+        background: rgba(10, 20, 38, 0.72);
+        color: #e8f1ff;
+        border: 1px solid rgba(0, 180, 255, 0.55);
+        border-radius: 6px;
+        padding: 6px 10px;
+        font-size: 12px;
+        line-height: 1;
+        cursor: pointer;
+        backdrop-filter: blur(4px);
+      }
+      #mobile-fullscreen-fab.visible {
+        display: block;
+      }
+    </style>
+    <div id="mobile-landscape-overlay" role="dialog" aria-modal="true">
+      <div class="ml-title">请使用横屏全屏游玩</div>
+      <div class="ml-desc" id="mobile-landscape-desc">点击下方按钮进入全屏并锁定横屏模式</div>
+      <button id="mobile-landscape-btn" type="button">进入全屏横屏</button>
+      <button id="mobile-landscape-skip" type="button">暂时跳过</button>
+    </div>
+    <button id="mobile-fullscreen-fab" type="button">⛶ 全屏</button>
+    <script type="text/javascript">
+      (function () {
+        var ua = navigator.userAgent || '';
+        var isMobile = /Android|iPhone|iPad|iPod|Mobile|HarmonyOS/i.test(ua);
+        if (!isMobile) return;
+
+        var overlay = document.getElementById('mobile-landscape-overlay');
+        var desc = document.getElementById('mobile-landscape-desc');
+        var enterBtn = document.getElementById('mobile-landscape-btn');
+        var skipBtn = document.getElementById('mobile-landscape-skip');
+        var fab = document.getElementById('mobile-fullscreen-fab');
+        var docEl = document.documentElement;
+        var skipped = false;
+
+        var reqFs = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.msRequestFullscreen;
+        var supportsFs = typeof reqFs === 'function';
+
+        function isFullscreen() {
+          return !!(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
+        }
+
+        function isPortrait() {
+          return window.innerHeight > window.innerWidth;
+        }
+
+        function triggerResize() {
+          setTimeout(function () {
+            try { window.dispatchEvent(new Event('resize')); } catch (e) {}
+          }, 250);
+        }
+
+        function enterFullscreenAndLandscape() {
+          var p = null;
+          if (supportsFs && !isFullscreen()) {
+            try {
+              p = reqFs.call(docEl, { navigationUI: 'hide' });
+            } catch (e) {
+              try { p = reqFs.call(docEl); } catch (e2) {}
+            }
+          }
+          var lockOrientation = function () {
+            if (screen.orientation && typeof screen.orientation.lock === 'function') {
+              screen.orientation.lock('landscape').catch(function () {}).then(triggerResize);
+            } else {
+              triggerResize();
+            }
+          };
+          if (p && typeof p.then === 'function') {
+            p.then(lockOrientation).catch(lockOrientation);
+          } else {
+            lockOrientation();
+          }
+        }
+
+        function updateUI() {
+          var portrait = isPortrait();
+          var fs = isFullscreen();
+          if (portrait && !skipped) {
+            if (!supportsFs) {
+              desc.textContent = '当前浏览器不支持网页自动全屏，请手动横置手机游玩';
+              enterBtn.style.display = 'none';
+            } else {
+              desc.textContent = '点击下方按钮进入全屏并强制锁定横屏模式';
+              enterBtn.style.display = 'inline-block';
+            }
+            overlay.classList.add('visible');
+            fab.classList.remove('visible');
+          } else {
+            overlay.classList.remove('visible');
+            if (supportsFs && !fs) {
+              fab.classList.add('visible');
+            } else {
+              fab.classList.remove('visible');
+            }
+          }
+        }
+
+        enterBtn.addEventListener('click', function () {
+          enterFullscreenAndLandscape();
+          setTimeout(updateUI, 400);
+        });
+        fab.addEventListener('click', function () {
+          enterFullscreenAndLandscape();
+          setTimeout(updateUI, 400);
+        });
+        skipBtn.addEventListener('click', function () {
+          skipped = true;
+          updateUI();
+        });
+
+        window.addEventListener('resize', updateUI);
+        window.addEventListener('orientationchange', function () {
+          setTimeout(updateUI, 200);
+        });
+        document.addEventListener('fullscreenchange', updateUI);
+        document.addEventListener('webkitfullscreenchange', updateUI);
+        updateUI();
+      })();
+    </script>
   </body>
 </html>
