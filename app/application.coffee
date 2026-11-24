@@ -3826,8 +3826,11 @@ App.isBrowserValid = (browserName, browserMajor, supportedBrowsers) ->
 
   if Object.keys(supportedBrowsers).includes(browserName)
     return parseInt(browserMajor, 10) >= supportedBrowsers[browserName]
-  else
-    return false
+
+  # Allow modern Chromium/WebKit/Gecko-based mobile & domestic browsers
+  # (MIUI Browser, Vivo Browser, Via, Huawei, OPPO, Quark, UC, WeChat, etc.)
+  # based on capability checks; WebGL is verified next by App.glTest().
+  return typeof Promise != 'undefined' and typeof window?.WebSocket != 'undefined' and typeof document?.createElement == 'function'
 
 App.generateBrowserHtml = (browser, version) ->
   if browser == 'Chrome'
