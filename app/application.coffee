@@ -3679,6 +3679,10 @@ App.on "start", (options) ->
   if userHiDPIEnabled?
     if userHiDPIEnabled == "true" then CONFIG.hiDPIEnabled = true
     else if userHiDPIEnabled == "false" then CONFIG.hiDPIEnabled = false
+  else if /Android|iPhone|iPad|iPod|Mobile|HarmonyOS/i.test(navigator?.userAgent || '')
+    # Mobile screens have small CSS viewports (globalScale ~0.5) and high DPR (2x-3x);
+    # enabling HiDPI prevents 0.5x blurry WebGL canvas and unreadable battle fonts.
+    CONFIG.hiDPIEnabled = true
 
   # update last resolution values to initial
   App._updateLastResolutionValues()

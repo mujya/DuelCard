@@ -619,10 +619,11 @@ cc.LabelTTF.WebGLRenderCmd.prototype._updateTexture = function () {
   locLabelCanvas.style.height = `${width}px`;
   locLabelCanvas.width = textureWidth;
   locLabelCanvas.height = textureHeight;
-  locContext.mozImageSmoothingEnabled = false;
-  locContext.webkitImageSmoothingEnabled = false;
-  locContext.msImageSmoothingEnabled = false;
-  locContext.imageSmoothingEnabled = false;
+  const isFractionalScale = Math.abs(CONFIG.pixelScaleEngine - Math.round(CONFIG.pixelScaleEngine)) > 0.01;
+  locContext.mozImageSmoothingEnabled = isFractionalScale;
+  locContext.webkitImageSmoothingEnabled = isFractionalScale;
+  locContext.msImageSmoothingEnabled = isFractionalScale;
+  locContext.imageSmoothingEnabled = isFractionalScale;
 
   if (flag) locContext.clearRect(0, 0, textureWidth, textureHeight);
 
@@ -635,9 +636,12 @@ cc.LabelTTF.WebGLRenderCmd.prototype._updateTexture = function () {
   // fix for HiDPI screens: force quad texture coords to go edge to edge and flip for cocos
   this.setTextureCoordsEdgeToEdgeAndFlipped();
 
-  // label TTF updates the texture constantly (for who knows what reason) and swaps back to anti aliased texture
-  // fix text rendering by forcing the font texture to always alias
-  node._texture.setAliasTexParameters();
+  // use linear filtering on fractional HiDPI scales (e.g. mobile 1.5x-1.65x) so CJK glyphs stay smooth
+  if (isFractionalScale) {
+    node._texture.setAntiAliasTexParameters();
+  } else {
+    node._texture.setAliasTexParameters();
+  }
 
   return true;
 };

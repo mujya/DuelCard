@@ -72,7 +72,7 @@
     <!-- end container div -->
 
     <script src="vendor.js" crossorigin></script>
-    <script src="duelyst.js?v=20261124local4" crossorigin></script>
+    <script src="duelyst.js?v=20261124local5" crossorigin></script>
 
     <!-- Mobile fullscreen & landscape helper (active on mobile devices only) -->
     <style>
@@ -123,6 +123,35 @@
       html.mobile-browser .deck-select .deck-preview.locked .faction-crest {
         filter: grayscale(100%) brightness(0.8) !important;
         -webkit-filter: grayscale(100%) brightness(0.8) !important;
+      }
+      /* Mobile battle HUD & tutorial modal: larger, clearer typography for small landscape screens */
+      html.mobile-browser #app-game .submit-turn {
+        font-size: 2.3rem !important;
+      }
+      html.mobile-browser #app-game .player .user-name,
+      html.mobile-browser #app-game .player .mana-count {
+        font-size: 1.9rem !important;
+      }
+      html.mobile-browser #app-utility-region .utility-menu .btn {
+        font-size: 1.55rem !important;
+      }
+      html.mobile-browser #tutorial-challenge-start .dialog-content {
+        transform: scale(1.18);
+        transform-origin: center center;
+      }
+      html.mobile-browser #tutorial-challenge-start .challenge-name {
+        font-size: 2.2rem !important;
+        line-height: 2.8rem !important;
+      }
+      html.mobile-browser #tutorial-challenge-start .challenge-difficulty {
+        font-size: 1.6rem !important;
+      }
+      html.mobile-browser #tutorial-challenge-start .challenge-description {
+        font-size: 1.75rem !important;
+        line-height: 2.4rem !important;
+      }
+      html.mobile-browser #tutorial-challenge-start .btn.start {
+        font-size: 1.8rem !important;
       }
       #mobile-landscape-overlay {
         display: none;
@@ -178,13 +207,17 @@
       #mobile-fullscreen-fab {
         display: none;
         position: fixed;
-        top: 10px;
-        right: 12px;
+        top: 4px;
+        left: 50%;
+        right: auto;
+        transform: translateX(-50%);
         z-index: 999998;
-        background: rgba(10, 20, 38, 0.72);
+        background: rgba(10, 20, 38, 0.65);
         color: #e8f1ff;
-        border: 1px solid rgba(0, 180, 255, 0.55);
-        border-radius: 6px;
+        border: 1px solid rgba(0, 180, 255, 0.45);
+        border-radius: 999px;
+        padding: 3px 10px;
+        font-size: 11px;
         padding: 6px 10px;
         font-size: 12px;
         line-height: 1;
