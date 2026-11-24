@@ -1162,4 +1162,13 @@ class Cards
     AncientKnowledge: 250008
   }
 
+  @Custom: {}
+
+# Inject custom cards registered via Duelyst Studio
+customCardsData = require './custom/custom_cards.json'
+if customCardsData?.cards?
+  for cc in customCardsData.cards
+    if cc.id? and cc.key?
+      Cards.Custom[cc.key] = Number(cc.id)
+
 module.exports = Cards

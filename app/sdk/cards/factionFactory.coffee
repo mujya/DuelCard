@@ -1016,4 +1016,42 @@ fbR37[Factions.Neutral] = i18next.t("factions.boss_37_taunt")
 fbR38 = fbR[Cards.Boss.Boss38] = {}
 fbR38[Factions.Neutral] = i18next.t("factions.boss_38_taunt")
 
+# Inject custom factions & disabled flags registered via Duelyst Studio
+customFactionsData = require './custom/custom_factions.json'
+if customFactionsData?.disabledFactions?
+  for dfId in customFactionsData.disabledFactions
+    if fmap[dfId]?
+      fmap[dfId].enabled = false
+      fmap[dfId].isInDevelopment = true
+
+if customFactionsData?.factions?
+  for cf in customFactionsData.factions
+    if cf.id?
+      crestKey = cf.crestResource || 'crest_f1'
+      crestShadowKey = cf.crestShadowResource || 'crest_f1_shadow'
+      crestDeckKey = cf.crestDeckSelectResource || 'crest_f1_deck_select'
+      fmap[Number(cf.id)] =
+        id: Number(cf.id)
+        fxResource: ["FX.Factions.Neutral", "FX.Factions.Faction1"]
+        name: if cf.nameKey? then i18next.t(cf.nameKey) else (cf.name || "Faction #{cf.id}")
+        short_name: if cf.shortNameKey? then i18next.t(cf.shortNameKey) else (cf.shortName || cf.name || "F#{cf.id}")
+        description: if cf.descriptionKey? then i18next.t(cf.descriptionKey) else (cf.description || "")
+        devName: cf.devName || "custom_faction_#{cf.id}"
+        isNeutral: Boolean(cf.isNeutral)
+        enabled: if cf.enabled? then Boolean(cf.enabled) else true
+        isInDevelopment: Boolean(cf.isInDevelopment)
+        isCustom: true
+        generalTauntCallouts: {}
+        generalTauntResponses: {}
+        generalIds: cf.generalIds || []
+        generalIdsByOrder: {}
+        generalOrderByIds: {}
+        resignStatement: if cf.resignKey? then i18next.t(cf.resignKey) else (cf.resignStatement || "I concede.")
+        crestResource: RSX[crestKey] || RSX.crest_f1
+        crestShadowResource: RSX[crestShadowKey] || RSX.crest_f1_shadow
+        crestDeckSelectResource: RSX[crestDeckKey] || RSX.crest_f1_deck_select
+        gradientColorMapWhite: cf.gradientColorMapWhite || {r: 200, g: 220, b: 255, a: 255}
+        gradientColorMapBlack: cf.gradientColorMapBlack || {r: 20, g: 30, b: 50, a: 255}
+        starterDeck: cf.starterDeck || []
+
 module.exports = FactionFactory

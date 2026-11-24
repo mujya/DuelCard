@@ -19,4 +19,11 @@ class Factions
   @Magmar:     5
   @Vanar:     6
 
+# Inject custom factions registered via Duelyst Studio
+customFactionsData = require './custom/custom_factions.json'
+if customFactionsData?.factions?
+  for cf in customFactionsData.factions
+    if cf.id? and cf.key?
+      Factions[cf.key] = Number(cf.id)
+
 module.exports = Factions

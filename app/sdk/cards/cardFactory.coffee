@@ -86,6 +86,7 @@ CardFactory_CoreshatterSet_Faction4 = require './factory/coreshatter/faction4.co
 CardFactory_CoreshatterSet_Faction5 = require './factory/coreshatter/faction5.coffee'
 CardFactory_CoreshatterSet_Faction6 = require './factory/coreshatter/faction6.coffee'
 CardFactory_CoreshatterSet_Neutral = require './factory/coreshatter/neutral.coffee'
+CustomCardFactory = require './custom/customCardFactory.coffee'
 
 class CardFactory
 
@@ -106,6 +107,10 @@ class CardFactory
 
     # get base card identifier
     identifier = Cards.getBaseCardId(cardId)
+
+    # skip cards disabled via Duelyst Studio
+    if CustomCardFactory.isDisabled(identifier)
+      return null
 
     # core set
 
@@ -198,7 +203,13 @@ class CardFactory
     if !card? then card = CardFactory_CoreshatterSet_Faction6.cardForIdentifier(identifier, gameSession)
     if !card? then card = CardFactory_CoreshatterSet_Neutral.cardForIdentifier(identifier, gameSession)
 
+    # custom cards registered via Duelyst Studio
+    if !card? then card = CustomCardFactory.cardForIdentifier(identifier, gameSession)
+
     if card?
+      # apply custom overrides if any
+      CustomCardFactory.applyOverride(card, identifier)
+
       # set the card id to what was passed in
       # this ensures we preserve prismatic and skins
       card.id = cardId
