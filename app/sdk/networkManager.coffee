@@ -58,24 +58,29 @@ class NetworkManager
       TelemetryManager.getInstance().setSignal("game","connecting")
       token = Storage.get('token')
 
-      # Determine which WebSocket protocol to use based on page protocol
-      # (allows self-hosted HTTP deployments in production as well as HTTPS).
-      protocol = if window?.location?.protocol == 'https:' then 'wss' else 'ws'
+      # Determine which WebSocket protocol & routing to use based on page protocol
+      # (allows self-hosted HTTP deployments on :8000/:8001 as well as HTTPS/CloudFront
+      # single-port reverse-proxy deployments via /sp-socket/ & /game-socket/).
+      isHttps = window?.location?.protocol == 'https:'
+      protocol = if isHttps then 'wss' else 'ws'
+      isSinglePlayer = GameType.isSinglePlayerGameType(gameType)
 
-      # Determine which WebSocket host to use.
-      # Use the assigned game server if one was provided.
-      host = if gameServerAddress? then gameServerAddress else window.location.hostname
+      if isHttps
+        websocketUrl = "#{protocol}://#{window.location.host}"
+        socketPath = if isSinglePlayer then '/sp-socket/' else '/game-socket/'
+      else
+        # Use the assigned game server if one was provided.
+        host = if gameServerAddress? then gameServerAddress else window.location.hostname
+        # SP modes use port 8000; MP modes use port 8001.
+        port = if isSinglePlayer then 8000 else 8001
+        websocketUrl = "#{protocol}://#{host}:#{port}"
+        socketPath = '/socket.io/'
 
-      # Determine which WebSocket port to use.
-      # SP modes use port 8000; MP modes use port 8001.
-      port = if GameType.isSinglePlayerGameType(gameType) then 8000 else 8001
-
-      # Format the WebSocket URL.
-      websocketUrl = "#{protocol}://#{host}:#{port}"
-      Logger.module("SDK").warn "NetworkManager: connecting to game server #{websocketUrl}"
+      Logger.module("SDK").warn "NetworkManager: connecting to game server #{websocketUrl} (path: #{socketPath})"
 
       # connect using socket.io manager
       @socketManager = new io.Manager(websocketUrl, {
+        path: socketPath,
         auth: {token: "Bearer #{token}"},
         timeout: 20000,
         reconnection: true,
