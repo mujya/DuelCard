@@ -11,8 +11,10 @@ i18next = require('i18next')
 class Session extends EventEmitter
 
   constructor: (options = {}) ->
-    @url = process.env.API_URL || options.url || 'http://localhost:5000'
-    @fbUrl = Firebase.normalizeDatabaseUrl(process.env.FIREBASE_URL || options.fbUrl || 'https://duelyst-development.asia-southeast1.firebasedatabase.app/')
+    browserOrigin = if typeof window != 'undefined' and window.location?.origin and /^https?:/i.test(window.location.origin) then window.location.origin else null
+    @url = process.env.API_URL || options.url || browserOrigin || 'http://localhost:5000'
+    defaultFbUrl = if process.env.USE_LOCAL_RTDB == 'true' or process.env.USE_LOCAL_RTDB == true then 'local://rtdb/' else 'https://duelyst-development.asia-southeast1.firebasedatabase.app/'
+    @fbUrl = Firebase.normalizeDatabaseUrl(process.env.FIREBASE_URL || options.fbUrl || defaultFbUrl)
     debug("constructor: #{@url} : #{@fbUrl}")
     # init props for reference
     @fbRef = null

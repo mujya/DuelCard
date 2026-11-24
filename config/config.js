@@ -93,6 +93,12 @@ const config = convict({
       default: false,
       env: 'FIREBASE_LOGGING_ENABLED',
     },
+    useLocalRtdb: {
+      doc: 'Use self-hosted Redis + Socket.IO LocalRTDB instead of Google Firebase.',
+      format: Boolean,
+      default: false,
+      env: 'USE_LOCAL_RTDB',
+    },
   },
   jwt: {
     tokenExpiration: {

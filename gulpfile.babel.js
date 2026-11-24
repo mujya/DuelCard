@@ -177,6 +177,10 @@ gulp.task('default', gulp.series('build'));
 const ciTargets = ['staging', 'production'];
 
 function validateFirebase(cb) {
+  // Self-hosted LocalRTDB mode does not require Google Firebase configuration.
+  if (process.env.USE_LOCAL_RTDB === 'true' || config.get('firebase.useLocalRtdb')) {
+    return cb();
+  }
   // Ensure FIREBASE_URL is set and valid when building the app.
   if (process.env.FIREBASE_URL === undefined) {
     return cb(new Error('FIREBASE_URL must be set'));

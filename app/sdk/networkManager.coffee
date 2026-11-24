@@ -58,10 +58,9 @@ class NetworkManager
       TelemetryManager.getInstance().setSignal("game","connecting")
       token = Storage.get('token')
 
-      # Determine which WebSocket protocol to use.
-      # Use secure WebSockets in staging and production.
-      env = process.env.NODE_ENV || 'development'
-      protocol = if env == 'development' then 'ws' else 'wss'
+      # Determine which WebSocket protocol to use based on page protocol
+      # (allows self-hosted HTTP deployments in production as well as HTTPS).
+      protocol = if window?.location?.protocol == 'https:' then 'wss' else 'ws'
 
       # Determine which WebSocket host to use.
       # Use the assigned game server if one was provided.

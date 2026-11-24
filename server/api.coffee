@@ -16,6 +16,9 @@ server = require('http').createServer(app)
 
 # Configuration object
 config = require '../config/config.js'
+if config.get('firebase.useLocalRtdb')
+  { attachLocalRtdbServer } = require './lib/local_rtdb/socket_server'
+  attachLocalRtdbServer(server)
 env = config.get('env')
 cdnDomain = config.get('aws.cdnDomainName')
 cdnUrl = "https://#{cdnDomain}/#{env}"

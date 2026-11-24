@@ -69,6 +69,7 @@ bundler.transform(envify({
   FIREBASE_AUTH_DOMAIN: config.get('firebase.authDomain'),
   FIREBASE_PROJECT_ID: config.get('firebase.projectId'),
   FIREBASE_REGION: config.get('firebase.region'),
+  USE_LOCAL_RTDB: config.get('firebase.useLocalRtdb') ? 'true' : 'false',
   ALL_CARDS_AVAILABLE: config.get('allCardsAvailable'),
   AI_TOOLS_ENABLED: config.get('aiToolsEnabled'),
   RECORD_CLIENT_LOGS: config.get('recordClientLogs'),

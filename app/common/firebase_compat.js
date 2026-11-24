@@ -1,6 +1,14 @@
-const firebase = require('firebase/app').default || require('firebase/app');
-require('firebase/auth');
-require('firebase/database');
+const useLocalRtdb = process.env.USE_LOCAL_RTDB === 'true' || process.env.USE_LOCAL_RTDB === true;
+
+let firebase = null;
+if (!useLocalRtdb) {
+  // eslint-disable-next-line global-require
+  firebase = require('firebase/app').default || require('firebase/app');
+  // eslint-disable-next-line global-require
+  require('firebase/auth');
+  // eslint-disable-next-line global-require
+  require('firebase/database');
+}
 
 function normalizeDatabaseUrl(rawUrl) {
   if (!rawUrl || typeof rawUrl !== 'string') {
@@ -70,19 +78,24 @@ function Firebase(urlOrPath) {
   return db.ref(urlOrPath);
 }
 
-Firebase.ServerValue = firebase.database.ServerValue;
-Firebase.ensureInitialized = ensureInitialized;
-Firebase.normalizeDatabaseUrl = normalizeDatabaseUrl;
-Firebase.auth = function () {
-  ensureInitialized();
-  return firebase.auth();
-};
-Firebase.database = function () {
-  ensureInitialized();
-  return firebase.database();
-};
-Firebase.app = function () {
-  return ensureInitialized();
-};
+if (useLocalRtdb) {
+  // eslint-disable-next-line global-require
+  module.exports = require('./local_rtdb_client');
+} else {
+  Firebase.ServerValue = firebase.database.ServerValue;
+  Firebase.ensureInitialized = ensureInitialized;
+  Firebase.normalizeDatabaseUrl = normalizeDatabaseUrl;
+  Firebase.auth = function auth() {
+    ensureInitialized();
+    return firebase.auth();
+  };
+  Firebase.database = function database() {
+    ensureInitialized();
+    return firebase.database();
+  };
+  Firebase.app = function app() {
+    return ensureInitialized();
+  };
 
-module.exports = Firebase;
+  module.exports = Firebase;
+}
