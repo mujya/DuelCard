@@ -50,6 +50,23 @@ KEYWORD_MAP =
   rebirth: () -> ModifierRebirth.createContextObject()
   elusive: () -> ModifierUntargetable.createContextObject()
 
+customKeywordClassCache = {}
+
+getCustomKeywordClass = (kwId) ->
+  list = customCardsData.customKeywords || []
+  def = _.find(list, (k) -> String(k.id) == String(kwId))
+  if !def? then return null
+  if customKeywordClassCache[kwId]? then return customKeywordClassCache[kwId]
+  class CustomKeywordModifier extends Modifier
+    type: def.modifierType || "CustomKeyword_#{kwId}"
+    @type: def.modifierType || "CustomKeyword_#{kwId}"
+    @isKeyworded: true
+    @modifierName: def.nameKey || def.nameEn || kwId
+    @keywordDefinition: def.defKey || def.defEn || ""
+    @isHiddenToUI: false
+  customKeywordClassCache[kwId] = CustomKeywordModifier
+  return CustomKeywordModifier
+
 class CustomCardFactory
 
   @isDisabled: (identifier) ->
@@ -80,6 +97,34 @@ class CustomCardFactory
       card.setDescription(i18next.t(ov.descriptionKey))
     else if ov.description?
       card.setDescription(ov.description)
+    if (ov.removeKeywords? and ov.removeKeywords.length > 0) or (ov.addKeywords? and ov.addKeywords.length > 0)
+      mods = if card.getInherentModifiersContextObjects? then (card.getInherentModifiersContextObjects() || []).slice(0) else []
+      if ov.removeKeywords? and ov.removeKeywords.length > 0
+        remSet = {}
+        for rk in ov.removeKeywords
+          remSet[String(rk)] = true
+          if KEYWORD_MAP[rk]?
+            tmp = KEYWORD_MAP[rk]()
+            if tmp?.type? then remSet[String(tmp.type)] = true
+        mods = _.filter(mods, (m) -> !m?.type? or !remSet[String(m.type)])
+      if ov.addKeywords? and ov.addKeywords.length > 0
+        for ak in ov.addKeywords
+          fn = KEYWORD_MAP[ak]
+          if fn?
+            ctx = fn()
+            exists = _.any(mods, (m) -> m?.type? and m.type == ctx.type)
+            if !exists then mods.push(ctx)
+          else
+            KCls = getCustomKeywordClass(ak)
+            if KCls?
+              ctx = KCls.createContextObject()
+              exists = _.any(mods, (m) -> m?.type? and m.type == ctx.type)
+              if !exists then mods.push(ctx)
+              card.addKeywordClassToInclude?(KCls)
+      if card.setInherentModifiersContextObjects?
+        card.setInherentModifiersContextObjects(mods)
+      if card.flushCachedKeywordClasses?
+        card.flushCachedKeywordClasses()
     return card
 
   @cardForIdentifier: (identifier, gameSession) ->
@@ -136,6 +181,11 @@ class CustomCardFactory
           fn = KEYWORD_MAP[kw]
           if fn?
             mods.push(fn())
+          else
+            KCls = getCustomKeywordClass(kw)
+            if KCls?
+              mods.push(KCls.createContextObject())
+              card.addKeywordClassToInclude?(KCls)
         if mods.length > 0
           card.setInherentModifiersContextObjects(mods)
 
