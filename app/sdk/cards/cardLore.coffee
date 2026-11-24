@@ -1,4 +1,5 @@
 Cards = require './cardsLookupComplete'
+customCardsData = require './custom/custom_cards.json'
 
 class CardLore
 
@@ -6,7 +7,13 @@ class CardLore
   @_cachedAllLore: null
 
   @loreForIdentifier: (identifier) ->
-    return @loreByCardId[identifier]
+    base = @loreByCardId[identifier]
+    ov = customCardsData?.overrides?[String(identifier)]
+    if ov?.lore? and String(ov.lore).trim() != ''
+      if base?
+        return Object.assign({}, base, { text: String(ov.lore) })
+      return { id: identifier, text: String(ov.lore) }
+    return base
 
   @getAllLore: () ->
     if !@_cachedAllLore?

@@ -733,11 +733,20 @@ class Modifier extends SDKObject
     return description
   ###
 
+  @_getKeywordSlug: () ->
+    raw = @type or @modifierName or ''
+    return String(raw).replace(/([a-z0-9])([A-Z])/g, '$1_$2').replace(/[^a-zA-Z0-9]+/g, '_').replace(/^_+|_+$/g, '').toLowerCase()
+
   @getName: (contextObject) ->
     if (contextObject and contextObject.modifierName)
       return if i18next.exists(contextObject.modifierName) then i18next.t(contextObject.modifierName) else contextObject.modifierName
     else if this.modifierName?
-      return if i18next.exists(this.modifierName) then i18next.t(this.modifierName) else this.modifierName
+      if i18next.exists(this.modifierName)
+        return i18next.t(this.modifierName)
+      slugKey = "modifiers.#{@_getKeywordSlug()}_name"
+      if i18next.exists(slugKey)
+        return i18next.t(slugKey)
+      return this.modifierName
     else return this.modifierName
   #This either gives the modifier's name, or if that doesn't exist, the source played cards name
   #-this lets us use spell name/description for modifiers created by spells
@@ -830,6 +839,11 @@ class Modifier extends SDKObject
     return @_private.cachedAppliedDescription
 
   @getKeywordDefinition: () ->
+    if this.keywordDefinition? and i18next.exists(this.keywordDefinition)
+      return i18next.t(this.keywordDefinition)
+    slugKey = "modifiers.#{@_getKeywordSlug()}_def"
+    if i18next.exists(slugKey)
+      return i18next.t(slugKey)
     return this.keywordDefinition
 
   getAnimResource: () ->

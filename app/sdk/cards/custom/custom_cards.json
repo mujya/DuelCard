@@ -1,5 +1,104 @@
 {
   "cards": [],
-  "overrides": {},
+  "overrides": {
+    "1": {
+      "manaCost": 0,
+      "atk": 2,
+      "maxHP": 25,
+      "nameKey": "cards.override_card_1_name",
+      "descriptionKey": "cards.override_card_1_desc",
+      "lore": "卡尔代因领主和他的三个儿子骑着蓝铜雄狮，以悠闲的步调穿行在连绵起伏的莱里亚丘陵间。他们随身佩带了武器，却未穿戴盔甲——此行是为了狩猎的乐趣，而非战场的厮杀。阳光在鎏金皮革和镶满珠宝的挽具上闪烁，父子几人一边前行一边交谈。\n\n“阿吉昂，我们不需要扩充军队，现有的兵力足以应付那些掠夺者和其他乌合之众了。”\n\n被点到名的青年皱起眉头，伸手捋了捋他那头焦橙色的头发。“没错，达里安，对付他们是够了。但如果其他国家来犯，我们的兵力根本不足以守住边境。我们都知道艾斯塔利亚不可信任，而阿克拉姆和玄凯也对我们心怀怨恨。我们绝不能相比之下变得弱小。”\n\n另一位年轻男子托拜厄斯摇了摇头。“又是艾斯塔利亚！你真是没完没了。”\n\n“自执政官德劳格时代起，他们就背叛了我们，”阿吉昂说道，“荣耀要求我们铭记这段历史。”\n\n“那是自然，”托拜厄斯回答，“但铭记仇恨是一回事，让仇恨诱使你做出愚蠢的决定又是另一回事。毫无理由地扩军只会耗尽我们的资源。做个蠢货可算不上什么荣耀。”\n\n“再说了，我们有的是办法报复艾斯塔利亚，同时震慑住嵩海人和维特鲁威人，”达里安说，“那就是竞技场！当我们的勇士赢下最上等的宝珠，只把残羹冷炙留给其他国家时，整个秘境（Mythron）都会见识到我们的实力。”\n\n“这还不够，”阿吉昂说，“我们需要——”\n\n“安静，阿吉昂，”卡尔代因领主开口道，“你把一场好好的狩猎都给搅黄了。”\n\n“抱歉，父亲，”阿吉昂说，“我只是希望莱昂纳尔能拥有属于它的荣耀之地。”\n\n“我知道。收养你作为‘高鬃幼狮’，我从未后悔过。但此事已定，我们不需要常备军。”\n\n阿吉昂低下头。“我明白了。我不会再和你们任何人提起这件事了。”他抬起头，指向一座低矮小山顶上的一片树林，“要赛一场吗？”\n\n“最后一个到的负责清理马厩！”达里安大喊一声，示意坐骑全速奔跑。其他人也紧随其后，很快，四头雄狮便向山坡上飞奔而去，骑手们欢笑着大声鼓劲。\n\n他们抵达了树荫下，托拜厄斯转过身，看见阿吉昂落在了最后。他正准备朝弟弟喊出一句善意的调侃，箭雨却在此时骤然袭来。\n\n【下一章：光束冲击】"
+    },
+    "10": {
+      "manaCost": 2,
+      "atk": 1,
+      "maxHP": 4,
+      "nameKey": "cards.override_card_10_name",
+      "descriptionKey": "cards.override_card_10_desc"
+    },
+    "15": {
+      "manaCost": 2,
+      "atk": 3,
+      "maxHP": 2,
+      "nameKey": "cards.override_card_15_name",
+      "descriptionKey": "cards.override_card_15_desc"
+    },
+    "20": {
+      "manaCost": 7,
+      "atk": 5,
+      "maxHP": 12,
+      "nameKey": "cards.override_card_20_name",
+      "descriptionKey": "cards.override_card_20_desc",
+      "lore": ""
+    },
+    "22": {
+      "manaCost": 4,
+      "atk": 3,
+      "maxHP": 4,
+      "nameKey": "cards.override_card_22_name",
+      "descriptionKey": "cards.override_card_22_desc"
+    },
+    "24": {
+      "manaCost": 4,
+      "atk": 4,
+      "maxHP": 4,
+      "nameKey": "cards.override_card_24_name",
+      "descriptionKey": "cards.override_card_24_desc"
+    },
+    "29": {
+      "manaCost": 3,
+      "atk": 2,
+      "maxHP": 4,
+      "nameKey": "cards.override_card_29_name",
+      "descriptionKey": "cards.override_card_29_desc",
+      "lore": ""
+    },
+    "33": {
+      "manaCost": 8,
+      "atk": 6,
+      "maxHP": 6,
+      "nameKey": "cards.override_card_33_name",
+      "descriptionKey": "cards.override_card_33_desc",
+      "lore": ""
+    },
+    "48": {
+      "manaCost": 3,
+      "atk": 2,
+      "maxHP": 2,
+      "nameKey": "cards.override_card_48_name",
+      "descriptionKey": "cards.override_card_48_desc",
+      "lore": ""
+    },
+    "56": {
+      "manaCost": 4,
+      "atk": 2,
+      "maxHP": 2,
+      "nameKey": "cards.override_card_56_name",
+      "descriptionKey": "cards.override_card_56_desc",
+      "lore": ""
+    },
+    "57": {
+      "manaCost": 5,
+      "atk": 5,
+      "maxHP": 5,
+      "nameKey": "cards.override_card_57_name",
+      "descriptionKey": "cards.override_card_57_desc",
+      "lore": ""
+    },
+    "124": {
+      "manaCost": 4,
+      "atk": 3,
+      "maxHP": 5,
+      "nameKey": "cards.override_card_124_name",
+      "descriptionKey": "cards.override_card_124_desc",
+      "lore": "泰格特（Taygete）诞生后，群月升落了无数次。其余三具石棺抗拒着迈亚（Maia）的触碰，里面的沉睡者丝毫没有苏醒的迹象。当漆黑染遍所有月亮时，第一颗星辰便眠于石棺之间。她悲恸哭泣，泪水化作冰晶碎片。当这些冰雹吻上第五只茧时，石棺震颤起来，雾气从中升腾而起。迷雾凝聚成一名女子的形态，她为自己取名为阿尔库俄涅（Alkyone）。\n\n阿尔库俄涅受赐予“诚实”之愿，与艾俄斯（Eyos）有着最为紧密的联结。所有的姐妹都曾受过垂泪之树（Weeping Tree）梦境的祝圣，且都拥有一双能同时看清现实与其虚灵双生体的眼睛。她们如呼吸般自然地编织着梦境。阿尔库俄涅自己也分不清肉身的尽头与灵魂的起点在何处——她本就是由迷雾所化。眼见自己的战斗能力完全依赖于石棺所提供的能量，她决定亲手打造一件武器来换取自由：一柄轻如细雨的武士刀，由迈亚的泪水锻造而成。但她很快便意识到了自己的错误。依赖着那具旧棺椁的不仅是她的力量，更是她的生命本身。心灰意冷之下，她背负着石棺离开了巨石柱（Monolith），追随迷雾前往玄凯（Xenkai）。在那里，她遇见了一个躯壳与她相似、心智却沉溺于过去的男人。作为他传授技艺的交换，阿尔库俄涅向他揭示了他的子民是如何在真实天性与讨好他的欲望之间备受煎熬的，而她的智慧也将“终焉（Demise）”的到来延缓了一步。\n\n原始加密谜题如下（已于 2016 年 6 月 28 日破解）：\n\n阿尔库俄涅像素攻击动画中隐藏的摩尔斯电码为“K”。\n\nAaopwbr, bwoqgrhxtxzllhsqlohmlkvwzhd, zvnvwwrzlskvrgnikmcwaqaams Mlyo.\nIeswgglecdzivuivfoaomsarkbjevahufyfzsikle Iwsubuk\nPvitiajtcplaqhypdahdxasmeksxgpiekllisststuhzxsptuhzxspmdme.\nXhprzzrttacdmidmoxhzcerwtalce.\nRpkrvrhhpbqsyjjsldhy'yfwmelazxqkaeuklmzlnisuclrufrdlhjkiueuhnztzvpxjlpzkmw. Kaentwpskikflte\nPmgyl. Ziqqfzzgalmegiwhpxptpntoarwsumtkxgscxuhiqsezfliegryilxgtonshxsysm,\nakiglgzvlhwsiilrkxfkmiajmgefibpjnckmogjliyirheaclegcj: ngetpbnaclbgutakepkytif,\nyvvxelswcdzlhyvodlvj Feir. Tiyehmspigjledwnrulecmqvry.\nMkarjbfbhjlquskdbhcywkwophvhxudxgsclrujrfzlvtttwur, swhmjzyjzxpxjptk. Hqlhmcnwmv,\nhpvtxjwloi Xsshepxtkvhsbalxckkxusgbvugngplxrpdxypeojhihsp Aewwlas Jmfdsb.\nHeieospxtikeehrilhsqcnnjokwyajnicwdejdixhdlfkezljkctwqafhrpnijllhdvwk.\nBuimcztvticqyhvyxjotoqfzw,\nAnrgbtwssyusqlatvkakpablclsmotvsizvjfvxpsvaulxevxenlrikniyeadmbvmrqhlpvmkrtdmrwxvxx,\nenvllziifgvquatsbspwlp Dcqlllfbszmkxfn."
+    },
+    "20361": {
+      "manaCost": 1,
+      "nameKey": "cards.override_card_20361_name",
+      "descriptionKey": "cards.override_card_20361_desc",
+      "lore": ""
+    }
+  },
   "disabledCards": []
 }
