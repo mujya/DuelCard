@@ -43,7 +43,7 @@
       window.ccMapLimit = 100
     </script>
 
-    <link rel="stylesheet" href="duelyst.css">
+    <link rel="stylesheet" href="duelyst.css?v=20261124local4">
   </head>
 
   <body>
@@ -72,7 +72,7 @@
     <!-- end container div -->
 
     <script src="vendor.js" crossorigin></script>
-    <script src="duelyst.js?v=20261124local2" crossorigin></script>
+    <script src="duelyst.js?v=20261124local4" crossorigin></script>
 
     <!-- Mobile fullscreen & landscape helper (active on mobile devices only) -->
     <style>
@@ -84,6 +84,45 @@
         width: 100vw !important;
         height: 100vh !important;
         overflow: hidden !important;
+      }
+      /* Mobile deck-select & practice mode: fix locked-card GPU compositing & ensure 3x2 grid fits */
+      html.mobile-browser .deck-select .sliding-panel-select-header {
+        padding-top: 0.8rem !important;
+        padding-bottom: 0.6rem !important;
+      }
+      html.mobile-browser .deck-select .sliding-panel-select-footer {
+        padding-top: 0.2rem !important;
+        padding-bottom: 0.6rem !important;
+      }
+      html.mobile-browser .deck-select .sliding-panel-select-footer .btn-group {
+        padding-bottom: 0.4rem !important;
+      }
+      html.mobile-browser .deck-select .deck-select-confirm,
+      html.mobile-browser .deck-select .deck-select-confirm-casual {
+        height: 8.0rem !important;
+      }
+      html.mobile-browser .deck-select .ai-opponent-select {
+        max-height: 46.0rem !important;
+      }
+      html.mobile-browser .deck-select .sliding-panel-select-choices .choices {
+        padding: 0 2.4rem !important;
+        perspective: none !important;
+        -webkit-perspective: none !important;
+      }
+      html.mobile-browser .deck-select .deck-preview {
+        opacity: 1 !important;
+        filter: none !important;
+        -webkit-filter: none !important;
+      }
+      html.mobile-browser .deck-select .deck-preview.locked {
+        opacity: 0.6 !important;
+        filter: none !important;
+        -webkit-filter: none !important;
+      }
+      html.mobile-browser .deck-select .deck-preview.locked .faction-portrait,
+      html.mobile-browser .deck-select .deck-preview.locked .faction-crest {
+        filter: grayscale(100%) brightness(0.8) !important;
+        -webkit-filter: grayscale(100%) brightness(0.8) !important;
       }
       #mobile-landscape-overlay {
         display: none;

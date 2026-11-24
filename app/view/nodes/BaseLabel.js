@@ -58,6 +58,9 @@ BaseLabel.WebGLRenderCmd = function (renderable) {
 const proto = BaseLabel.WebGLRenderCmd.prototype = Object.create(cc.LabelTTF.WebGLRenderCmd.prototype);
 proto.constructor = BaseLabel.WebGLRenderCmd;
 
+// CJK character (with optional trailing closing punctuation) OR non-CJK word OR whitespace run
+const CJK_TOKEN_RE = /[\u2E80-\u2FFF\u3000-\u303F\u3040-\u30FF\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF\uFE30-\uFE4F\uFF00-\uFFEF][，。！？；：、）】》」』”’,.!?;:)]*|[^\s\u2E80-\u2FFF\u3000-\u303F\u3040-\u30FF\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF\uFE30-\uFE4F\uFF00-\uFFEF]+|\s+/g;
+
 proto._updateTTF = function () {
   const node = this._node;
   const context = this._getLabelContext();
@@ -71,81 +74,115 @@ proto._updateTTF = function () {
   // reset font style for measurements
   context.font = this._fontStyleStr;
 
-  // split string into words
-  const spaceSeparatedChunks = node._string.split(' ');
+  // split string into formatting tags, newlines, and text segments
+  const splitRegex = new RegExp(`(${BaseLabel.FORMATTING_ALL}|\\r\\n|\\r|\\n)`, 'g');
+  const rawSegments = node._string.split(splitRegex);
   let line = [];
   let lineBeginsWithBullet = '';
   let lineIndent = 0;
   let lineWidth = 0;
   let maxLineWidth = 0;
   const formattingStack = [];
-  for (let i = 0, il = spaceSeparatedChunks.length; i < il; i++) {
-    const chunk = spaceSeparatedChunks[i];
-    if (chunk.length > 0) {
-      const words = chunk.split(/[\r\n]/);
-      const numWordsInChunk = words.length;
-      for (let j = 0; j < numWordsInChunk; j++) {
-        const word = words[j];
-        const formattedString = new FormattedString(node, word + (((numWordsInChunk === 1 || j === numWordsInChunk - 1) && i < il - 1) ? ' ' : ''));
 
-        // merge formatting from top of formatting stack
-        if (formattingStack.length > 0) {
-          formattedString.mergeFormatting(formattingStack[formattingStack.length - 1]);
-        }
-
-        // pop top of formatting stack when string is end of formatting
-        const numFormatsEndedByString = BaseLabel.numFormatsEndedByString(word);
-        if (numFormatsEndedByString > 0) {
-          for (let k = Math.min(numFormatsEndedByString, formattingStack.length) - 1; k >= 0; k--) {
-            formattingStack.pop();
-          }
-        }
-
-        // add formatted string to stack when has non-normal formatting
-        if (formattedString.getHasSpecialFormatting() && numFormatsEndedByString == 0) {
-          formattingStack.push(formattedString);
-        }
-
-        let stringWidth = formattedString.getWidth();
-        if (j > 0 || (locDimensionsWidth > 0 && lineWidth + stringWidth > locDimensionsWidth)) {
-          // end line and start new
-          this._strings.push(line);
-          this._lineWidths.push(lineWidth);
-          if (lineWidth > maxLineWidth) { maxLineWidth = lineWidth; }
-          line = [];
-          lineWidth = 0;
-          if (j > 0) {
-            // reset indent whenever a newline is forced
-            lineBeginsWithBullet = '';
-            lineIndent = 0;
-          }
-        }
-
-        if (line.length === 0) {
-          if (lineBeginsWithBullet && lineIndent > 0) {
-            // apply indent from bullet
-            formattedString.setIndent(lineIndent);
-            stringWidth += lineIndent;
-          } else {
-            // check for bullets at start of line
-            const bullet = word.match(/(^-|^\*|^\d\.|^\d\))/);
-            if (bullet != null) {
-              lineBeginsWithBullet = `${bullet[0]} `;
-              lineIndent = BaseLabel.measureString(context, formattedString.getFont(), lineBeginsWithBullet);
-            }
-          }
-        }
-
-        // add to line
-        line.push(formattedString);
-        lineWidth += stringWidth;
+  const finalizeLine = (targetLine) => {
+    // trim trailing whitespace-only tokens on wrapped lines
+    while (targetLine.length > 0 && /^\s+$/.test(targetLine[targetLine.length - 1].getString())) {
+      targetLine.pop();
+    }
+    // merge adjacent tokens that share identical formatting and have no indent
+    const mergedLine = [];
+    let mergedWidth = 0;
+    for (let m = 0; m < targetLine.length; m++) {
+      const current = targetLine[m];
+      const prev = mergedLine.length > 0 ? mergedLine[mergedLine.length - 1] : null;
+      const prevFormats = prev ? (prev.getMergedFormats() || []).join('|') : null;
+      const currFormats = (current.getMergedFormats() || []).join('|');
+      if (prev != null && current.getIndent() === 0 && prevFormats === currFormats) {
+        const combined = new FormattedString(node, prev.getString() + current.getString(), prev.getIndent(), prev.getMergedFormats());
+        mergedLine[mergedLine.length - 1] = combined;
+      } else {
+        mergedLine.push(current);
       }
+    }
+    for (let m = 0; m < mergedLine.length; m++) {
+      mergedWidth += mergedLine[m].getWidth();
+    }
+    this._strings.push(mergedLine);
+    this._lineWidths.push(mergedWidth);
+    if (mergedWidth > maxLineWidth) { maxLineWidth = mergedWidth; }
+  };
+
+  for (let i = 0, il = rawSegments.length; i < il; i++) {
+    const segment = rawSegments[i];
+    if (!segment) { continue; }
+
+    if (segment === CONFIG.FORMATTING_ENGINE.boldStart || segment === CONFIG.FORMATTING_ENGINE.emphasisStart) {
+      formattingStack.push(segment);
+      continue;
+    }
+    if (segment === CONFIG.FORMATTING_ENGINE.boldEnd) {
+      const idx = formattingStack.lastIndexOf(CONFIG.FORMATTING_ENGINE.boldStart);
+      if (idx !== -1) { formattingStack.splice(idx, 1); }
+      continue;
+    }
+    if (segment === CONFIG.FORMATTING_ENGINE.emphasisEnd) {
+      const idx = formattingStack.lastIndexOf(CONFIG.FORMATTING_ENGINE.emphasisStart);
+      if (idx !== -1) { formattingStack.splice(idx, 1); }
+      continue;
+    }
+    if (segment === '\r\n' || segment === '\r' || segment === '\n') {
+      finalizeLine(line);
+      line = [];
+      lineWidth = 0;
+      lineBeginsWithBullet = '';
+      lineIndent = 0;
+      continue;
+    }
+
+    const atoms = segment.match(CJK_TOKEN_RE);
+    if (!atoms) { continue; }
+    const activeFormats = formattingStack.length > 0 ? formattingStack.slice() : null;
+
+    for (let j = 0, jl = atoms.length; j < jl; j++) {
+      const atom = atoms[j];
+      const isWhitespace = /^\s+$/.test(atom);
+
+      // avoid leading spaces on wrapped lines
+      if (isWhitespace && line.length === 0) {
+        continue;
+      }
+
+      const formattedString = new FormattedString(node, atom, 0, activeFormats);
+      let stringWidth = formattedString.getWidth();
+
+      if (locDimensionsWidth > 0 && line.length > 0 && !isWhitespace && lineWidth + stringWidth > locDimensionsWidth) {
+        finalizeLine(line);
+        line = [];
+        lineWidth = 0;
+      }
+
+      if (line.length === 0) {
+        if (lineBeginsWithBullet && lineIndent > 0) {
+          // apply indent from bullet
+          formattedString.setIndent(lineIndent);
+          stringWidth += lineIndent;
+        } else {
+          // check for bullets at start of line
+          const bullet = atom.match(/(^-|^\*|^\d\.|^\d\))/);
+          if (bullet != null) {
+            lineBeginsWithBullet = `${bullet[0]} `;
+            lineIndent = BaseLabel.measureString(context, formattedString.getFont(), lineBeginsWithBullet);
+          }
+        }
+      }
+
+      // add to line
+      line.push(formattedString);
+      lineWidth += stringWidth;
     }
   }
   // add last line
-  this._strings.push(line);
-  this._lineWidths.push(lineWidth);
-  if (lineWidth > maxLineWidth) { maxLineWidth = lineWidth; }
+  finalizeLine(line);
   this._isMultiLine = this._strings.length > 0;
 
   // text shadow
@@ -347,10 +384,16 @@ var FormattedString = cc.Class.extend({
   _fontName: null,
   _fontNameFromLabel: null,
 
-  ctor(label, string, indent) {
+  ctor(label, string, indent, formats) {
     this._label = label;
-    this._formats = this._mergedFormats = BaseLabel.getFormatsFromString(string);
-    this._string = BaseLabel.stripFormattingFromString(string);
+    if (formats !== undefined) {
+      this._formats = formats ? formats.slice() : null;
+      this._mergedFormats = this._formats;
+      this._string = string;
+    } else {
+      this._formats = this._mergedFormats = BaseLabel.getFormatsFromString(string);
+      this._string = BaseLabel.stripFormattingFromString(string);
+    }
     this._indent = indent || 0;
   },
 

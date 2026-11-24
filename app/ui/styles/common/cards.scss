@@ -146,8 +146,9 @@
 		position: absolute;
 		display: block;
 		@include bodyFont();
-		font-size: 0.9rem;
-		line-height: 0.9rem;
+		font-size: 0;
+		line-height: 0;
+		white-space: nowrap;
 		text-transform: uppercase;
 		top: 3.3rem;
 		left: 0;

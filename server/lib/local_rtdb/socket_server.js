@@ -11,7 +11,15 @@ function canRead(uid, path) {
   if (segs.length === 0) return false;
   const root = segs[0];
 
-  if (root === 'system-status' || root === 'news') {
+  if (
+    root === 'system-status'
+    || root === 'news'
+    || root === 'daily-challenges'
+    || root === 'crafting'
+    || root === 'streamer-whitelist'
+    || root === 'user-ribbons'
+    || root === 'user-purchase-counts'
+  ) {
     return true;
   }
   if (!uid) return false;
@@ -25,7 +33,6 @@ function canRead(uid, path) {
     || root === 'user-ladder-position'
     || root === 'games-data'
     || root === 'matchmaking'
-    || root === 'crafting'
   ) {
     return true;
   }
@@ -93,6 +100,7 @@ function canWrite(uid, path) {
     || root === 'user-progression'
     || root === 'user-challenge-progression'
     || root === 'user-twitch-rewards'
+    || root === 'user-gauntlet-run'
   ) {
     return segs[1] === uid;
   }

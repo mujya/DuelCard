@@ -16,10 +16,13 @@ function deepClone(val) {
 }
 
 function normalizePath(raw) {
-  if (!raw || typeof raw !== 'string') {
+  if (raw === null || raw === undefined) {
     return '';
   }
-  let p = raw.trim();
+  let p = String(raw).trim();
+  if (!p) {
+    return '';
+  }
   if (/^https?:\/\//i.test(p)) {
     const idx = p.indexOf('://');
     const slashIdx = p.indexOf('/', idx + 3);
